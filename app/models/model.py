@@ -1,0 +1,62 @@
+from sqlalchemy import create_engine, Column, Boolean, Integer, Float, String, DateTime, ForeignKey
+from sqlalchemy.orm import declarative_base
+import datetime
+
+db = create_engine("sqlite:///database/dairy_database.db")
+Base = declarative_base()
+
+class SalePoints(Base):
+    __tablename__ = "sales_points"
+    
+    id = Column("id", Integer, primary_key=True, autoincrement=True)
+    name = Column("name", String)
+    
+    def __init__(self, name):
+        self.name = name
+        
+class Order(Base):
+    __tablename__ = "orders"
+    
+    id = Column("id", Integer, primary_key=True, autoincrement=True)
+    status = Column("status", Boolean)
+    total_value = Column("total_value", Float)
+    description = Column("description", String, nullable=True)
+    order_date = Column("order_date", DateTime)
+    
+    def __init__(self, total_value, description=None, status=False, order_datetime=None):
+        self.status = status
+        self.total_value = total_value
+        self.description = description
+        self.order_date = order_datetime or datetime.datetime.utcnow()
+        
+class Product(Base):
+    __tablename__ = "products"
+    
+    id = Column("id", Integer, primary_key=True, autoincrement=True)
+    name = Column("name", String)
+    price = Column("price", Float)
+    amount = Column("amount", Integer, nullable=True)
+    kg = Column("kg", Float, nullable=True)
+    liters = Column("liters", Float, nullable=True)
+    
+    def __init__(self, name, price, amount=None, kg=None, liters=None):
+        self.name = name 
+        self.price = price
+        self.amount = amount
+        self.kg = kg
+        self.liters = liters
+        
+class ItemsOrder(Base):
+    __tablename__ = "items_orders"
+    
+    order_id = Column("order_id", Integer, ForeignKey("orders.id"), primary_key=True)
+    product_id = Column("product_id", Integer, ForeignKey("products.id"), primary_key=True)
+    item_order_date = Column("item_order_date", DateTime)
+    item_price = Column("item_price", Float)
+    
+    def __init__(self, order_id, product: Product, item_order_date=None):
+        self.item_order_date = item_order_date or datetime.datetime.utcnow()
+        self.order_id = order_id
+        self.product_id = product.id
+        self.item_price = product.price
+        
