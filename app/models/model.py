@@ -23,9 +23,7 @@ class Order(Base):
     description = Column("description", String, nullable=True)
     order_date = Column("order_date",  DateTime(timezone=True))
     
-    def __init__(self, total_value, description=None, status=False, order_datetime=None):
-        self.status = status
-        self.total_value = total_value
+    def __init__(self, description=None, status=False, order_datetime=None):
         self.description = description
         self.order_date = order_datetime or datetime.now(UTC)
         
@@ -56,9 +54,12 @@ class ItemsOrder(Base):
     kg = Column("kg", Float, nullable=True)
     liters = Column("liters", Float, nullable=True)
     
-    def __init__(self, order_id, product: Product):
+    def __init__(self, order_id: int, product_id: int, item_price, amount: int = None, kg: float = None, liters: float = None):
         self.order_id = order_id
-        self.product_id = product.id
-        self.item_price = product.price
+        self.product_id = product_id
+        self.amount = amount
+        self.kg = kg
+        self.liters = liters
+        self.item_price = item_price
         
 Base.metadata.create_all(db)
