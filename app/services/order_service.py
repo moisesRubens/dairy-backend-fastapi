@@ -36,4 +36,40 @@ async def create_order(order_data: OrderRequestDTO, session):
     session.refresh(order)
     
     return order
+
+def get_all_orders(session):
+    # Get all orders
+    orders = session.query(Order).all()
+
+    result = []
+    for order in orders:
+        # load related items
+        items = session.query(ItemsOrder).filter_by(order_id=order.id).all()
+        result.append({
+            "order_id": order.id,
+            "description": order.description,
+            "total_value": order.total_value,
+            "items": [
+                {
+                    "product_id": item.product_id,
+                    "amount": item.amount,
+                    "kg": item.kg,
+                    "liters": item.liters,
+                    "item_price": item.item_price
+                }
+                for item in items
+            ]
+        })
+    return result
+
+async def delete_order(id: int, session):
+    order = session.get(Order, id)
+    
+    session.delete(order)
+    session.commit()
+    
+    return order
+    
+    
+    
     
