@@ -1,10 +1,12 @@
-from models.model import Order, ItemsOrder, Product
+from models.model import Order, ItemsOrder, Product, SalePoints, OrderSalePoint
 from schemas.schema import OrderRequestDTO
 
 async def create_order(order_data: OrderRequestDTO, session):
     order = Order(description=order_data.description)
     session.add(order)
     session.flush()
+
+    sale_point: SalePoints = Depends(get_current_user)
 
     total_value = 0
 
@@ -31,7 +33,11 @@ async def create_order(order_data: OrderRequestDTO, session):
         )
         session.add(item_order)
         
-    order.total_value = total_value        
+    order.total_value = total_value   
+
+    order_sale_point = OrderSalePoint(order.id, sale_point.id)
+    session(order_sale_point)
+
     session.commit()
     session.refresh(order)
     

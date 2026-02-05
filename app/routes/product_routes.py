@@ -17,7 +17,6 @@ async def store(name: str, price: float, amount: int = None, kg: float = None, l
     
     session.add(product)
     session.commit()
-    session.refresh(product)
     
     return {"message": "cadastro de produto"}
 

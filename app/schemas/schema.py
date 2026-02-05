@@ -10,3 +10,11 @@ class ItemOrderRequestDTO(BaseModel):
 class OrderRequestDTO(BaseModel):
     description: Optional[str] = None
     items: List[ItemOrderRequestDTO]
+
+class SalePointResponseDTO(BaseModel):
+    id: int
+    name: str
+    email: str
+
+    class Config:
+        from_attributes = True

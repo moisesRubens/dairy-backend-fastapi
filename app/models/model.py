@@ -10,9 +10,13 @@ class SalePoints(Base):
     
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     name = Column("name", String)
+    email = Column("email", String)
+    password = Column("password", String)
     
-    def __init__(self, name):
+    def __init__(self, name, email, password):
         self.name = name
+        self.email = email
+        self.password = password
         
 class Order(Base):
     __tablename__ = "orders"
@@ -61,5 +65,16 @@ class ItemsOrder(Base):
         self.kg = kg
         self.liters = liters
         self.item_price = item_price
+
+class OrderSalePoint(Base):
+    __tablename__ = "order_sale_point"
+
+    order_id = Column("order_id", Integer, ForeignKey("orders.id"), primary_key=True)
+    sale_point_id = Column("sale_point_id", Integer, ForeignKey("sales_points.id"), primary_key=True)
+
+    def __init__(self, order_id, sale_point_id):
+        self.order_id = order_id
+        self.sale_point_id = sale_point_id
+
         
 Base.metadata.create_all(db)
