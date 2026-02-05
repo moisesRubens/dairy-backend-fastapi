@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, Column, Boolean, Integer, Float, String, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base
-import datetime
+from datetime import datetime, UTC
 
 db = create_engine("sqlite:///database/dairy_database.db")
 Base = declarative_base()
@@ -21,13 +21,13 @@ class Order(Base):
     status = Column("status", Boolean)
     total_value = Column("total_value", Float)
     description = Column("description", String, nullable=True)
-    order_date = Column("order_date", DateTime)
+    order_date = Column("order_date",  DateTime(timezone=True))
     
     def __init__(self, total_value, description=None, status=False, order_datetime=None):
         self.status = status
         self.total_value = total_value
         self.description = description
-        self.order_date = order_datetime or datetime.datetime.utcnow()
+        self.order_date = order_datetime or datetime.now(UTC)
         
 class Product(Base):
     __tablename__ = "products"
@@ -51,12 +51,14 @@ class ItemsOrder(Base):
     
     order_id = Column("order_id", Integer, ForeignKey("orders.id"), primary_key=True)
     product_id = Column("product_id", Integer, ForeignKey("products.id"), primary_key=True)
-    item_order_date = Column("item_order_date", DateTime)
     item_price = Column("item_price", Float)
+    amount = Column("amount", Integer, nullable=True)
+    kg = Column("kg", Float, nullable=True)
+    liters = Column("liters", Float, nullable=True)
     
-    def __init__(self, order_id, product: Product, item_order_date=None):
-        self.item_order_date = item_order_date or datetime.datetime.utcnow()
+    def __init__(self, order_id, product: Product):
         self.order_id = order_id
         self.product_id = product.id
         self.item_price = product.price
         
+Base.metadata.create_all(db)
