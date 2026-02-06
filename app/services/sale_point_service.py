@@ -22,3 +22,6 @@ async def get_all_sales_points(session):
     sales_points = session.query(SalePoints).all()
 
     return [SalePointResponseDTO.model_validate(sp) for sp in sales_points]
+
+def fake_hash_password(password: str):
+    return "azmpfwyuvc" + password

@@ -12,6 +12,7 @@ class SalePoints(Base):
     name = Column("name", String)
     email = Column("email", String)
     password = Column("password", String)
+    hashed_password = Column("hashed_password", String)
     
     def __init__(self, name, email, password):
         self.name = name
@@ -76,5 +77,4 @@ class OrderSalePoint(Base):
         self.order_id = order_id
         self.sale_point_id = sale_point_id
 
-        
 Base.metadata.create_all(db)
