@@ -12,7 +12,6 @@ class SalePoints(Base):
     name = Column("name", String)
     email = Column("email", String)
     password = Column("password", String)
-    hashed_password = Column("hashed_password", String)
     
     def __init__(self, name, email, password):
         self.name = name
