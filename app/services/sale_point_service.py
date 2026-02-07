@@ -1,12 +1,15 @@
 from fastapi import HTTPException, status
-from typing import Annotated
-from fastapi import Depends
 from models.model import SalePoints
 from schemas.schema import SalePointResponseDTO
 from pwdlib import PasswordHash
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 
 pwd_context = PasswordHash.recommended()
+
+async def get_all_sales_points(session):
+    sales_points = session.query(SalePoints).all()
+    return [SalePointResponseDTO.model_validate(sp) for sp in sales_points]
+
 
 async def create_sale_point(name: str, email: str, password: str, session):
     sale_point = session.query(SalePoints).filter(SalePoints.name == name).first()
@@ -45,11 +48,7 @@ async def get_sale_point(id: int, session):
 
     if(sale_point):
         return SalePointResponseDTO.model_validate(sale_point)
-    
-async def get_all_sales_points(session):
-    sales_points = session.query(SalePoints).all()
 
-    return [SalePointResponseDTO.model_validate(sp) for sp in sales_points]
 
 
 
