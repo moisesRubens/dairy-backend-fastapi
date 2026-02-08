@@ -43,12 +43,19 @@ async def make_login(form_data: OAuth2PasswordRequestForm, session):
 
     return SalePointResponseDTO.model_validate(sale_point)
 
-async def get_sale_point(id: int, session):
+async def get_sale_point_service(id: int, session):
     sale_point = session.query(SalePoints).filter(SalePoints.id == id).first()
 
     if(sale_point):
         return SalePointResponseDTO.model_validate(sale_point)
 
+async def delete_sale_point_service(id: int, session):
+    sale_point = session.get(SalePoints, id)
 
+    if sale_point:
+        session.delete(sale_point)
+        session.commit()
+
+    return SalePointResponseDTO.model_validate(sale_point)
 
 
