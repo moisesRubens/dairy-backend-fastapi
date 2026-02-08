@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Column, Boolean, Integer, Float, String, DateTime, ForeignKey
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime, UTC
 
 db = create_engine("sqlite:///database/dairy_database.db")
@@ -26,11 +26,13 @@ class Order(Base):
     total_value = Column("total_value", Float)
     description = Column("description", String, nullable=True)
     order_date = Column("order_date",  DateTime(timezone=True))
+    items = relationship("ItemsOrder", back_populates="order", lazy="selectin")
     
     def __init__(self, description=None, status=False, order_datetime=None):
         self.description = description
         self.order_date = order_datetime or datetime.now(UTC)
-        
+        self.status = status
+
 class Product(Base):
     __tablename__ = "products"
     
@@ -57,6 +59,7 @@ class ItemsOrder(Base):
     amount = Column("amount", Integer, nullable=True)
     kg = Column("kg", Float, nullable=True)
     liters = Column("liters", Float, nullable=True)
+    order = relationship("Order", back_populates="items")
     
     def __init__(self, order_id: int, product_id: int, item_price, amount: int = None, kg: float = None, liters: float = None):
         self.order_id = order_id
