@@ -16,12 +16,10 @@ def index(session = Depends(make_session)):
 @order_router.post("/cadastrar")
 async def store(order_data: OrderRequestDTO, user = Depends(validate_token), session = Depends(make_session)):
         order = await create_order(order_data, user, session)
-
         return {"Pedido cadastrado": order}
         
 @order_router.delete("/{id}")
 async def destroy(id: int, session = Depends(make_session)):
         order = await delete_order(id, session)
-        
         return {"Pedido excluido": order}
         

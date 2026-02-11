@@ -17,6 +17,10 @@ async def make_session():
         session.close()
 
 async def validate_token(token: Annotated[str, Depends(oauth2_scheme)], session = Depends(make_session)):
-    data_user = session.query(SalePoints).filter(SalePoints.name == token).first()
-    return SalePointResponseDTO.model_validate(data_user)
+    try:
+        data_user = session.query(SalePoints).filter(SalePoints.name == token).first()
+        return SalePointResponseDTO.model_validate(data_user)
+    except Exception:
+        raise HTTPException(status_code=404, detail="token not found") 
+            
      
