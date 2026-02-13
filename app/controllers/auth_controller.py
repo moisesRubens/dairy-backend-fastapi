@@ -1,4 +1,4 @@
-from services.sale_point_service import get_sale_point_service, get_all_sales_points, login_service, create_sale_point, delete_sale_point_service
+from services.sale_point_service import get_sale_point_service, get_all_sales_points, login_service, create_sale_point, logout_service, delete_sale_point_service
 from fastapi.security import OAuth2PasswordRequestForm
 
 
@@ -10,8 +10,8 @@ async def login_user(form_data: OAuth2PasswordRequestForm, session):
     user_data = await login_service(form_data, session)
     return user_data
 
-async def logout_user(user, session):
-    return None
+async def logout_controller(token, session):
+    return await logout_service(token, session)
 
 async def get_all(session):
     sales_points = await get_all_sales_points(session)

@@ -79,4 +79,7 @@ class OrderSalePoint(Base):
         self.order_id = order_id
         self.sale_point_id = sale_point_id
 
-Base.metadata.create_all(db)
+class Token(Base):
+    __tablename__ = 'tokens'
+
+    id = Column(String, primary_key=True)

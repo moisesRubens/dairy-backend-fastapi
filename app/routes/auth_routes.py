@@ -2,8 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from dependecies import make_session, validate_token
-from models.model import SalePoints
-from controllers.auth_controller import get_all, login_user, create, get_sale_point, delete_sale_point, logout_user
+from controllers.auth_controller import get_all, login_user, create, get_sale_point, delete_sale_point, logout_controller
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -15,8 +14,8 @@ async def store(name: str, email:str, password: str, session = Depends(make_sess
 
 @auth_router.post("/login")
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session = Depends(make_session)):
-    sale_point = await login_user(form_data, session)
-    return {"access_token": sale_point.name, "token_type": "bearer"}
+    token = await login_user(form_data, session)
+    return {"access_token": token, "token_type": "bearer"}
 
 
 @auth_router.get("/")
@@ -32,9 +31,9 @@ async def show(id: int, user = Depends(validate_token), session = Depends(make_s
 
 
 @auth_router.post("/logout")
-async def logout(user = Depends(validate_token), session = Depends(make_session)):
-    await logout_user(user, session)
-    return {"message": "logout"}
+async def logout(token = Depends(validate_token), session = Depends(make_session)):
+    message = await logout_controller(token, session)
+    return {"message": message}
 
 
 @auth_router.delete("/{id}")
