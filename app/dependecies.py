@@ -24,8 +24,7 @@ async def validate_token(token: Annotated[str, Depends(oauth2_scheme)], session 
 
     SECRET_KEY = config('SECRET_KEY')
     ALGORITHM = config('ALGORITHM')
-    form_data = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    data_user = session.query(SalePoints).filter(SalePoints.name == form_data.get("sub")).first()
-    return token
+    user_data = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    return user_data
             
      

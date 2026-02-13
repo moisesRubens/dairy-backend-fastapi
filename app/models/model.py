@@ -1,6 +1,7 @@
-from sqlalchemy import create_engine, Column, Boolean, Integer, Float, String, DateTime, ForeignKey
+from sqlalchemy import create_engine, Column, Boolean, Integer, Float, String, DateTime, ForeignKey, text
 from sqlalchemy.orm import declarative_base, relationship
-from datetime import datetime, UTC
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 db = create_engine("sqlite:///database/dairy_database.db")
 Base = declarative_base()
@@ -9,75 +10,60 @@ class SalePoints(Base):
     __tablename__ = "sales_points"
     
     id = Column("id", Integer, primary_key=True, autoincrement=True)
-    name = Column("name", String)
-    email = Column("email", String)
-    password = Column("password", String)
-    
-    def __init__(self, name, email, password):
-        self.name = name
-        self.email = email
-        self.password = password
+    name = Column("name", String(100))
+    email = Column("email", String(200), nullable=True, unique=True)
+    password = Column("password", String(200))
         
 class Order(Base):
     __tablename__ = "orders"
     
     id = Column("id", Integer, primary_key=True, autoincrement=True)
-    status = Column("status", Boolean)
-    total_value = Column("total_value", Float)
-    description = Column("description", String, nullable=True)
-    order_date = Column("order_date",  DateTime(timezone=True))
+    status = Column("status", Boolean, server_default=text('FALSE'), nullable=False)
+    total_value = Column("total_value", Float, nullable=False)
+    description = Column("description", String(200), nullable=True)
+    order_date = Column("order_date",  DateTime(timezone=True), default=lambda:datetime.now(tz=ZoneInfo("America/Sao_Paulo")), nullable=False)
     items = relationship("ItemsOrder", back_populates="order", lazy="selectin")
+
+    items = relationship(
+        "ItemsOrder",
+        back_populates="order",
+        passive_deletes=True,
+        lazy="selectin"
+    )
+
+    sale_points = relationship(
+        "OrderSalePoint",
+        passive_deletes=True
+    )
     
-    def __init__(self, description=None, status=False, order_datetime=None):
-        self.description = description
-        self.order_date = order_datetime or datetime.now(UTC)
-        self.status = status
 
 class Product(Base):
     __tablename__ = "products"
     
     id = Column("id", Integer, primary_key=True, autoincrement=True)
-    name = Column("name", String)
-    price = Column("price", Float)
+    name = Column("name", String(100), nullable=False, unique=True)
+    price = Column("price", Float, nullable=True)
     amount = Column("amount", Integer, nullable=True)
     kg = Column("kg", Float, nullable=True)
     liters = Column("liters", Float, nullable=True)
-    
-    def __init__(self, name, price, amount=None, kg=None, liters=None):
-        self.name = name 
-        self.price = price
-        self.amount = amount
-        self.kg = kg
-        self.liters = liters
         
 class ItemsOrder(Base):
-    __tablename__ = "items_orders"
+    __tablename__ = "item_order"
     
-    order_id = Column("order_id", Integer, ForeignKey("orders.id"), primary_key=True)
-    product_id = Column("product_id", Integer, ForeignKey("products.id"), primary_key=True)
-    item_price = Column("item_price", Float)
+    order_id = Column("order_id", Integer, ForeignKey("orders.id", ondelete="CASCADE"), primary_key=True)
+    product_id = Column("product_id", Integer, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True)
+    item_price = Column("item_price", Float, nullable=False)
     amount = Column("amount", Integer, nullable=True)
     kg = Column("kg", Float, nullable=True)
     liters = Column("liters", Float, nullable=True)
     order = relationship("Order", back_populates="items")
     
-    def __init__(self, order_id: int, product_id: int, item_price, amount: int = None, kg: float = None, liters: float = None):
-        self.order_id = order_id
-        self.product_id = product_id
-        self.amount = amount
-        self.kg = kg
-        self.liters = liters
-        self.item_price = item_price
 
 class OrderSalePoint(Base):
     __tablename__ = "order_sale_point"
 
-    order_id = Column("order_id", Integer, ForeignKey("orders.id"), primary_key=True)
-    sale_point_id = Column("sale_point_id", Integer, ForeignKey("sales_points.id"), primary_key=True)
-
-    def __init__(self, order_id, sale_point_id):
-        self.order_id = order_id
-        self.sale_point_id = sale_point_id
+    order_id = Column("order_id", Integer, ForeignKey("orders.id", ondelete='CASCADE'), primary_key=True)
+    sale_point_id = Column("sale_point_id", Integer, ForeignKey("sales_points.id", ondelete="CASCADE"), primary_key=True)
 
 class Token(Base):
     __tablename__ = 'tokens'

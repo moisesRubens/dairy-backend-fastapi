@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 from pydantic import Field, ConfigDict
+from models.model import ItemsOrder
 
 class ItemOrderRequestDTO(BaseModel):
     product_id: int
@@ -11,10 +12,15 @@ class ItemOrderRequestDTO(BaseModel):
 
 class ItemOrderResponseDTO(BaseModel):
     product_id: int
-    price: float
+    price: float = Field(alias="item_price")
     amount: Optional[int] = None
     kg: Optional[float] = None
     liters: Optional[float] = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True
+    )
 
 class OrderRequestDTO(BaseModel):
     description: Optional[str] = None
@@ -29,8 +35,19 @@ class OrderResponseDTO(BaseModel):
     date: datetime = Field(alias="order_date")
 
     model_config = ConfigDict(
-        from_attributes=True,
-        populate_by_name=True
+        from_attributes=True
+    )
+
+class OrderResponse(BaseModel):
+    id: int
+    status: bool
+    total_value: float
+    description: str | None = None
+    date: datetime = Field(alias='order_date')
+    items: List[ItemOrderResponseDTO] | None = None 
+
+    model_config = ConfigDict(
+        from_attributes=True, populate_by_name=True
     )
 
 class SalePointResponseDTO(BaseModel):

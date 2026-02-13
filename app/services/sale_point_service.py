@@ -17,7 +17,10 @@ async def create_sale_point(name: str, email: str, password: str, session):
         return "Ja existe"
     
     hashed_pw = pwd_context.hash(password)
-    sale_point = SalePoints(name, email, hashed_pw)
+    sale_point = SalePoints()
+    sale_point.name = name
+    sale_point.email = email
+    sale_point.password = hashed_pw
     session.add(sale_point)
     session.commit()
     return SalePointResponseDTO.model_validate(sale_point)
@@ -38,7 +41,8 @@ async def login_service(form_data: OAuth2PasswordRequestForm, session):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="senha incorreta"
         )
-    to_encode = {"sub": sale_point.name}
+    to_encode = {"sub": sale_point.name,
+                 "id": sale_point.id}
     expire = datetime.now(tz=ZoneInfo("America/Sao_Paulo")) + timedelta(minutes=EXPIRE_TOKEN)
     to_encode.update({'exp': expire})
     token = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)

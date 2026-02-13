@@ -13,8 +13,11 @@ async def index(session = Depends(make_session)):
 
 @product_router.post("/cadastrar")
 async def store(name: str, price: float, amount: int = None, kg: float = None, liters: float = None, session = Depends(make_session)):
-    product = Product(name, price, amount, kg, liters)
-    
+    product = Product()
+    product.name = name
+    product.price = price
+    product.amount = amount
+    product.kg = kg
     session.add(product)
     session.commit()
     
