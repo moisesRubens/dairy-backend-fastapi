@@ -18,6 +18,6 @@ async def store(order_data: OrderRequestDTO, user = Depends(validate_token), ses
         
 @order_router.delete("/{id}")
 async def destroy(id: int, session = Depends(make_session)):
-        order = await delete_order(id, session)
+        order = delete_order(id, session)
         return {"Pedido excluido": order}
         

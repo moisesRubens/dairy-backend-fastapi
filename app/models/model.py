@@ -13,6 +13,11 @@ class SalePoints(Base):
     name = Column("name", String(100))
     email = Column("email", String(200), nullable=True, unique=True)
     password = Column("password", String(200))
+    order_sale_point = relationship(
+        "OrderSalePoint",
+        cascade="all, delete-orphan",
+        back_populates="sale_point"
+    )
         
 class Order(Base):
     __tablename__ = "orders"
@@ -22,18 +27,19 @@ class Order(Base):
     total_value = Column("total_value", Float, nullable=False)
     description = Column("description", String(200), nullable=True)
     order_date = Column("order_date",  DateTime(timezone=True), default=lambda:datetime.now(tz=ZoneInfo("America/Sao_Paulo")), nullable=False)
-    items = relationship("ItemsOrder", back_populates="order", lazy="selectin")
-
-    items = relationship(
+    item_order = relationship(
         "ItemsOrder",
         back_populates="order",
+        cascade="all, delete-orphan",
         passive_deletes=True,
         lazy="selectin"
     )
-
-    sale_points = relationship(
+    order_sale_point = relationship(
         "OrderSalePoint",
-        passive_deletes=True
+        back_populates="order",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy="selectin"
     )
     
 
@@ -46,6 +52,11 @@ class Product(Base):
     amount = Column("amount", Integer, nullable=True)
     kg = Column("kg", Float, nullable=True)
     liters = Column("liters", Float, nullable=True)
+    item_order = relationship(
+        "ItemsOrder",
+        back_populates="product",
+        passive_deletes=True
+    )
         
 class ItemsOrder(Base):
     __tablename__ = "item_order"
@@ -56,7 +67,14 @@ class ItemsOrder(Base):
     amount = Column("amount", Integer, nullable=True)
     kg = Column("kg", Float, nullable=True)
     liters = Column("liters", Float, nullable=True)
-    order = relationship("Order", back_populates="items")
+    order = relationship(
+        "Order",
+        back_populates="item_order"
+    )
+    product = relationship(
+        "Product",
+        back_populates="item_order"
+    )
     
 
 class OrderSalePoint(Base):
@@ -64,6 +82,14 @@ class OrderSalePoint(Base):
 
     order_id = Column("order_id", Integer, ForeignKey("orders.id", ondelete='CASCADE'), primary_key=True)
     sale_point_id = Column("sale_point_id", Integer, ForeignKey("sales_points.id", ondelete="CASCADE"), primary_key=True)
+    order = relationship(
+        "Order",
+        back_populates="order_sale_point"
+    )
+    sale_point = relationship(
+        "SalePoints",
+        back_populates="order_sale_point"
+    )
 
 class Token(Base):
     __tablename__ = 'tokens'
