@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends
-from services.order_service import delete_order
 from dependecies import make_session, validate_token
 from schemas.schema import OrderRequestDTO
-from controllers.order_controller import create_order_controller, get_all_orders_controller
+from controllers.order_controller import create_order_controller, get_all_orders_controller, delete_order_controller
 
 order_router = APIRouter(prefix="/pedidos", tags=["Order"])
 
@@ -17,7 +16,7 @@ async def store(order_data: OrderRequestDTO, user = Depends(validate_token), ses
         return {"Pedido cadastrado": order}
         
 @order_router.delete("/{id}")
-async def destroy(id: int, session = Depends(make_session)):
-        order = delete_order(id, session)
+async def destroy(id: int, session = Depends(make_session), user = Depends(validate_token)):
+        order = delete_order_controller(id, session)
         return {"Pedido excluido": order}
         

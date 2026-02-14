@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from dependecies import make_session
 from models.model import Product
-from services.product_service import get_all_products
+from controllers.product_controller import delete_product_controller
 
 product_router = APIRouter(prefix="/produto", tags=["Product"])
 
@@ -25,12 +25,8 @@ async def store(name: str, price: float, amount: int = None, kg: float = None, l
 
 @product_router.delete("/{id}")
 async def destroy(id: int, session = Depends(make_session)):
-    product = session.get(Product, id)
-    
-    if not product:
-        raise HTTPException(status_code=404, detail="Product nao encontrado")
-
-    session.delete(product)
-    session.commit()
-
-    return {"message": "Produto excluido"}
+    try:
+        product_data = delete_product_controller(session, id)
+        return {"Produto excluido": product_data}
+    except Exception as e:
+        raise e

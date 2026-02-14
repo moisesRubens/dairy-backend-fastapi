@@ -1,4 +1,5 @@
 from models.model import Product
+from fastapi import HTTPException
 
 async def get_all_products(session):
     products = session.query(Product).all()
@@ -17,3 +18,10 @@ async def get_all_products(session):
         })
         
     return result
+
+def delete_product_service(session, id):
+    product = session.get(Product, id)
+    if not product:
+        raise HTTPException()
+    session.delete(product)
+    session.commit()

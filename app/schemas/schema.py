@@ -57,3 +57,4 @@ class SalePointResponseDTO(BaseModel):
 
     class Config:
         from_attributes = True
+

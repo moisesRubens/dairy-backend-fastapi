@@ -58,7 +58,7 @@ def get_all_orders_service(session):
         result.append(order_data)
     return result
 
-def delete_order(id: int, session):
+def delete_order_service(id: int, session):
     order = session.get(Order, id)
     order_data = OrderResponse.model_validate(order)
     items = session.query(ItemsOrder).filter(ItemsOrder.order_id==order.id)
