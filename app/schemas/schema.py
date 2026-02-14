@@ -58,3 +58,15 @@ class SalePointResponseDTO(BaseModel):
     class Config:
         from_attributes = True
 
+class ProductResponseDTO(BaseModel):
+    id: int
+    name: str
+    price: float
+    amount: int | None = None
+    kg: int | None = None
+    liters: int | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True
+    )
