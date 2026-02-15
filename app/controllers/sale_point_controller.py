@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from exceptions.SalePointExceptions import ExistingSalePointException, SalePointNotFound
 from fastapi import HTTPException
 from schemas.schema import SalePointRequestDTO
+from exceptions.TokenExceptions import ExpiredTokenException
 
 
 async def create_sale_point_controller(name, email, password, session):
@@ -23,7 +24,11 @@ async def login_controller(form_data: OAuth2PasswordRequestForm, session):
         raise e
 
 async def logout_controller(token, session):
-    return await logout_service(token, session)
+    try:
+        message = await logout_service(token, session)
+        return message
+    except ExpiredTokenException as e:
+        raise HTTPException(409, detail=str(e))
 
 def get_all_sales_points_controller(session):
     try:

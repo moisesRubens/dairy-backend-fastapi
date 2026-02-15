@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from models.model import SalePoints, Token
 from schemas.schema import SalePointResponseDTO, SalePointRequestDTO
 from pwdlib import PasswordHash
@@ -12,7 +12,7 @@ from exceptions.SalePointExceptions import ExistingSalePointException, SalePoint
 pwd_context = PasswordHash.recommended()
 
 async def create_sale_point_service(sale_point_request: SalePointRequestDTO, session):
-    sale_point = session.query(SalePoints).filter(SalePoints.name.upper() == sale_point_request.name.upper()).first()
+    sale_point = session.query(SalePoints).filter(SalePoints.name==sale_point_request.name).first()
     if(sale_point):
         raise ExistingSalePointException()
     
@@ -35,10 +35,10 @@ def login_service(form_data: OAuth2PasswordRequestForm, session):
         raise SalePointNotFound()
     if not pwd_context.verify(form_data.password, sale_point.password):
         raise HTTPException(401, "invalid credentials")
-    to_encode = {"sub": sale_point.name, "id": sale_point.id}
+    payload = {"sub": str(sale_point.id)}
     expire = datetime.now(tz=ZoneInfo("America/Sao_Paulo")) + timedelta(minutes=EXPIRE_TOKEN)
-    to_encode.update({'exp': expire})
-    token = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    payload.update({'exp': expire})
+    token = encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return token
     
 
@@ -54,10 +54,11 @@ def get_all_sales_points_service(session):
 
 
 async def logout_service(token, session):
-    revoked_token = Token(id=token)
+    revoked_token = Token()
+    revoked_token.id = token
     session.add(revoked_token)
     session.commit()
-    return 'Logout sucedido'
+    return 'Logout successful'
 
 async def get_sale_point_service(id: int, session):
     sale_point = session.query(SalePoints).filter(SalePoints.id == id).first()

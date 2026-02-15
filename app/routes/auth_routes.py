@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
-from fastapi.security import OAuth2PasswordRequestForm
-from dependecies import make_session, validate_token
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from dependecies import make_session, validate_token, oauth2_scheme
 from controllers.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -28,7 +28,7 @@ async def show(id: int, user = Depends(validate_token), session = Depends(make_s
 
 
 @auth_router.post("/logout")
-async def logout(token = Depends(validate_token), session = Depends(make_session)):
+async def logout(token: Annotated[str, Depends(oauth2_scheme)], user_data = Depends(validate_token), session = Depends(make_session)):
     message = await logout_controller(token, session)
     return {"message": message}
 
