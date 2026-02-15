@@ -1,57 +1,56 @@
 from fastapi import HTTPException, status
 from models.model import SalePoints, Token
-from schemas.schema import SalePointResponseDTO
+from schemas.schema import SalePointResponseDTO, SalePointRequestDTO
 from pwdlib import PasswordHash
 from fastapi.security import OAuth2PasswordRequestForm
 from jwt import encode
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from decouple import config
+from exceptions.SalePointExceptions import ExistingSalePointException, SalePointNotFound
 
 pwd_context = PasswordHash.recommended()
 
-async def create_sale_point(name: str, email: str, password: str, session):
-    sale_point = session.query(SalePoints).filter(SalePoints.name == name).first()
-    
+async def create_sale_point_service(sale_point_request: SalePointRequestDTO, session):
+    sale_point = session.query(SalePoints).filter(SalePoints.name.upper() == sale_point_request.name.upper()).first()
     if(sale_point):
-        return "Ja existe"
+        raise ExistingSalePointException()
     
-    hashed_pw = pwd_context.hash(password)
     sale_point = SalePoints()
-    sale_point.name = name
-    sale_point.email = email
+    hashed_pw = pwd_context.hash(sale_point_request.password)
     sale_point.password = hashed_pw
+    sale_point.name = sale_point_request.name
+    sale_point.email = sale_point_request.email
     session.add(sale_point)
     session.commit()
     return SalePointResponseDTO.model_validate(sale_point)
 
-async def login_service(form_data: OAuth2PasswordRequestForm, session):
+def login_service(form_data: OAuth2PasswordRequestForm, session):
     SECRET_KEY = config('SECRET_KEY')
     EXPIRE_TOKEN = int(config('EXPIRE_TIME_TOKEN'))
     ALGORITHM = config('ALGORITHM')
-    sale_point = session.query(SalePoints).filter(SalePoints.name == form_data.username).first()
 
+    sale_point = session.query(SalePoints).filter(SalePoints.name == form_data.username).first()
     if not sale_point:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuario nao encontrado"
-        )
+        raise SalePointNotFound()
     if not pwd_context.verify(form_data.password, sale_point.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="senha incorreta"
-        )
-    to_encode = {"sub": sale_point.name,
-                 "id": sale_point.id}
+        raise HTTPException(401, "invalid credentials")
+    to_encode = {"sub": sale_point.name, "id": sale_point.id}
     expire = datetime.now(tz=ZoneInfo("America/Sao_Paulo")) + timedelta(minutes=EXPIRE_TOKEN)
     to_encode.update({'exp': expire})
     token = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return token
     
 
-async def get_all_sales_points(session):
+def get_all_sales_points_service(session):
     sales_points = session.query(SalePoints).all()
-    return [SalePointResponseDTO.model_validate(sp) for sp in sales_points]
+    if not sales_points:
+        raise SalePointNotFound("Empty storage")
+    
+    result = []
+    for sale_point in sales_points:
+        result.append(SalePointResponseDTO.model_validate(sale_point))
+    return result
 
 
 async def logout_service(token, session):
@@ -66,13 +65,16 @@ async def get_sale_point_service(id: int, session):
     if(sale_point):
         return SalePointResponseDTO.model_validate(sale_point)
 
-async def delete_sale_point_service(id: int, session):
-    sale_point = session.get(SalePoints, id)
+def delete_sale_point_service(sale_point_request: SalePointRequestDTO, session):
+    sale_point = session.get(SalePoints, sale_point_request.id)
+    if not sale_point:
+        raise SalePointNotFound()
+    sale_point_response = SalePointResponseDTO.model_validate(sale_point)
+    #logout
+    session.delete(sale_point)
+    session.commit()
+    return sale_point_response
 
-    if sale_point:
-        session.delete(sale_point)
-        session.commit()
 
-    return SalePointResponseDTO.model_validate(sale_point)
 
 

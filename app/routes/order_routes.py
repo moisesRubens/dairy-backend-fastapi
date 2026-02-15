@@ -6,7 +6,7 @@ from controllers.order_controller import create_order_controller, get_all_orders
 order_router = APIRouter(prefix="/pedidos", tags=["Order"])
 
 @order_router.get("/")
-def index(session = Depends(make_session)): 
+def index(user = Depends(validate_token), session = Depends(make_session)): 
     orders = get_all_orders_controller(session)
     return orders
 

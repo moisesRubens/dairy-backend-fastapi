@@ -58,6 +58,14 @@ class SalePointResponseDTO(BaseModel):
     class Config:
         from_attributes = True
 
+
+class SalePointRequestDTO(BaseModel):
+    id: int | None = None
+    name: str | None = None
+    email: str | None = None
+    password: str | None = None
+
+
 class ProductResponseDTO(BaseModel):
     id: int
     name: str
