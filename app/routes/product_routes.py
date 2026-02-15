@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
-from dependecies import make_session, validate_token
+from dependecies import make_session
+from sales_points.sale_point_dependencies import validate_token
 from controllers.product_controller import delete_product_controller, create_product_controller, get_all_products_controller
 
 product_router = APIRouter(prefix="/produto", tags=["Product"])

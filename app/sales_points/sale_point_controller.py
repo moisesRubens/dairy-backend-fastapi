@@ -1,8 +1,8 @@
-from services.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service
+from sales_points.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service
 from fastapi.security import OAuth2PasswordRequestForm
-from exceptions.SalePointExceptions import ExistingSalePointException, SalePointNotFound
+from sales_points.sale_point_exceptions import ExistingSalePointException, SalePointNotFound
 from fastapi import HTTPException
-from schemas.schema import SalePointRequestDTO
+from sales_points.sale_point_schema import SalePointRequestDTO
 from exceptions.TokenExceptions import ExpiredTokenException
 
 

@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 from pydantic import Field, ConfigDict
-from models.model import ItemsOrder
 
 class ItemOrderRequestDTO(BaseModel):
     product_id: int
@@ -49,21 +48,6 @@ class OrderResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True, populate_by_name=True
     )
-
-class SalePointResponseDTO(BaseModel):
-    id: int
-    name: str
-    email: str
-
-    class Config:
-        from_attributes = True
-
-
-class SalePointRequestDTO(BaseModel):
-    id: int | None = None
-    name: str | None = None
-    email: str | None = None
-    password: str | None = None
 
 
 class ProductResponseDTO(BaseModel):

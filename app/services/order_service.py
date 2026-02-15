@@ -1,4 +1,4 @@
-from models.model import Order, ItemsOrder, Product, SalePoints, OrderSalePoint
+from model import Order, ItemsOrder, Product, SalePoints, OrderSalePoint
 from schemas.schema import OrderRequestDTO, OrderResponse, ItemOrderResponseDTO
 
 

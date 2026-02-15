@@ -1,4 +1,4 @@
-from models.model import Product
+from model import Product
 from schemas.schema import ProductResponseDTO
 from exceptions.ProductExceptions import ExistingProductException, ProductNotFound
 

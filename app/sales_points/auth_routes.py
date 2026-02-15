@@ -1,8 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from dependecies import make_session, validate_token, oauth2_scheme
-from controllers.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller
+from sales_points.sale_point_dependencies import make_session, validate_token, oauth2_scheme
+from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 

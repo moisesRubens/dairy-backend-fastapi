@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
-from dependecies import make_session, validate_token
+from sales_points.sale_point_dependencies import  validate_token
+from dependecies import make_session
 from schemas.schema import OrderRequestDTO
 from controllers.order_controller import create_order_controller, get_all_orders_controller, delete_order_controller
 

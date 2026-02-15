@@ -1,13 +1,13 @@
 from fastapi import HTTPException
-from models.model import SalePoints, Token
-from schemas.schema import SalePointResponseDTO, SalePointRequestDTO
+from model import SalePoints, Token
+from sales_points.sale_point_schema import SalePointResponseDTO, SalePointRequestDTO
 from pwdlib import PasswordHash
 from fastapi.security import OAuth2PasswordRequestForm
 from jwt import encode
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from decouple import config
-from exceptions.SalePointExceptions import ExistingSalePointException, SalePointNotFound
+from sales_points.sale_point_exceptions import ExistingSalePointException, SalePointNotFound
 
 pwd_context = PasswordHash.recommended()
 
@@ -51,7 +51,6 @@ def get_all_sales_points_service(session):
     for sale_point in sales_points:
         result.append(SalePointResponseDTO.model_validate(sale_point))
     return result
-
 
 async def logout_service(token, session):
     revoked_token = Token()
