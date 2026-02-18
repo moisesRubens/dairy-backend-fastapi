@@ -21,22 +21,6 @@ class ItemOrderResponseDTO(BaseModel):
         populate_by_name=True
     )
 
-class OrderRequestDTO(BaseModel):
-    description: Optional[str] = None
-    items: List[ItemOrderRequestDTO]
-
-
-class OrderResponseDTO(BaseModel):
-    id: int
-    status: bool
-    total_value: float
-    description: str
-    date: datetime = Field(alias="order_date")
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
 class OrderResponse(BaseModel):
     id: int
     status: bool
@@ -49,16 +33,7 @@ class OrderResponse(BaseModel):
         from_attributes=True, populate_by_name=True
     )
 
+class OrderRequestDTO(BaseModel):
+    description: Optional[str] = None
+    items: List[ItemOrderRequestDTO]
 
-class ProductResponseDTO(BaseModel):
-    id: int
-    name: str
-    price: float
-    amount: int | None = None
-    kg: int | None = None
-    liters: int | None = None
-
-    model_config = ConfigDict(
-        from_attributes=True,
-        populate_by_name=True
-    )

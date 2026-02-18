@@ -1,6 +1,5 @@
 from model import Order, ItemsOrder, Product, SalePoints, OrderSalePoint
-from schemas.schema import OrderRequestDTO, OrderResponse, ItemOrderResponseDTO
-
+from orders.order_schema import OrderResponse, OrderRequestDTO, ItemOrderResponseDTO
 
 def create_order_service(order_data: OrderRequestDTO, user, session):
     order = Order()

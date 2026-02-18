@@ -6,7 +6,7 @@ from typing import Annotated
 from model import Token
 from jwt import decode
 from decouple import config
-from exceptions.TokenExceptions import ExpiredTokenException
+from exceptions import ExpiredTokenException
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 

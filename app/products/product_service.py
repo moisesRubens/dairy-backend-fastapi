@@ -1,6 +1,6 @@
 from model import Product
-from schemas.schema import ProductResponseDTO
-from exceptions.ProductExceptions import ExistingProductException, ProductNotFound
+from products.product_schema import ProductResponseDTO
+from products.ProductExceptions import ExistingProductException, ProductNotFound
 
 def get_all_products_service(session):
     products = session.query(Product).all()

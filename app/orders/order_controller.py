@@ -1,5 +1,5 @@
-from services.order_service import create_order_service, get_all_orders_service, delete_order_service
-from schemas.schema import OrderRequestDTO
+from orders.order_service import create_order_service, get_all_orders_service, delete_order_service
+from orders.order_schema import OrderRequestDTO
 
 def create_order_controller(order_data: OrderRequestDTO, user, session):
     order_response_data = create_order_service(order_data, user, session)

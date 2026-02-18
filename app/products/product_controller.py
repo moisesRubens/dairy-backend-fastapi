@@ -1,6 +1,6 @@
-from services.product_service import delete_product_service, create_product_service, get_all_products_service
+from products.product_service import delete_product_service, create_product_service, get_all_products_service
 from fastapi import HTTPException
-from exceptions.ProductExceptions import ExistingProductException, ProductNotFound
+from products.ProductExceptions import ExistingProductException, ProductNotFound
 
 def delete_product_controller(session, id):
     try:

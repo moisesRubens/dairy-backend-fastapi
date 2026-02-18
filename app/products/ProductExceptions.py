@@ -1,10 +1,7 @@
-class DomainException(Exception):
-    pass
-
-class ExistingProductException(DomainException):
+class ExistingProductException(Exception):
     def __init__(self, message="Product already registered"):
         super().__init__(message)
 
-class ProductNotFound(DomainException):
+class ProductNotFound(Exception):
     def __init__(self, message="Product not found"):
         super().__init__(message)
