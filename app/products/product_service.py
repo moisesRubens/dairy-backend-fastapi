@@ -1,15 +1,16 @@
 from model import Product
 from products.product_schema import ProductResponseDTO
 from products.ProductExceptions import ExistingProductException, ProductNotFound
+from sqlalchemy import func
+from fastapi import HTTPException
 
 def get_all_products_service(session):
-    products = session.query(Product).all()
-    if not products:
-        raise Exception("Empty storage")
     result = []
-    for product in products:
-        product_data = ProductResponseDTO.model_validate(product)
-        result.append(product_data)
+    products = session.query(Product).all()
+    if products:
+        for product in products:
+            product_data = ProductResponseDTO.model_validate(product)
+            result.append(product_data)
     return result
 
 def delete_product_service(session, id):
@@ -22,7 +23,10 @@ def delete_product_service(session, id):
     return product_data
 
 def create_product_service(name, price, amount, kg, liters, session):
-    if exist_product(name, session):
+    if ((kg and liters) or (kg and  amount) or (amount and liters)):
+        raise HTTPException(404, "Invalid inputs") 
+    
+    if session.query(Product).filter(func.upper(Product.name) == name.upper()).first():
         raise ExistingProductException()
     product = Product()
     product.name = name
@@ -34,7 +38,3 @@ def create_product_service(name, price, amount, kg, liters, session):
     session.commit()
     
     return ProductResponseDTO.model_validate(product)
-
-def exist_product(name, session):
-    product = session.query(Product).filter(Product.name==name).first()
-    return True if product else False

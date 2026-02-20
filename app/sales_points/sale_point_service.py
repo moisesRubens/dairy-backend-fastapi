@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from model import SalePoints, Token
 from sales_points.sale_point_schema import SalePointResponseDTO, SalePointRequestDTO
 from pwdlib import PasswordHash
@@ -8,11 +8,14 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from decouple import config
 from sales_points.sale_point_exceptions import ExistingSalePointException, SalePointNotFound
+from sales_points.sale_point_dependencies import oauth2_scheme
+from typing import Annotated
+from sqlalchemy import func
 
 pwd_context = PasswordHash.recommended()
 
 async def create_sale_point_service(sale_point_request: SalePointRequestDTO, session):
-    sale_point = session.query(SalePoints).filter(SalePoints.name==sale_point_request.name).first()
+    sale_point = session.query(SalePoints).filter(func.upper(SalePoints.name) == sale_point_request.name.upper()).first()
     if(sale_point):
         raise ExistingSalePointException()
     
@@ -22,8 +25,10 @@ async def create_sale_point_service(sale_point_request: SalePointRequestDTO, ses
     sale_point.name = sale_point_request.name
     sale_point.email = sale_point_request.email
     session.add(sale_point)
+    session.flush()
+    sale_point_response = SalePointResponseDTO.model_validate(sale_point)
     session.commit()
-    return SalePointResponseDTO.model_validate(sale_point)
+    return sale_point_response
 
 def login_service(form_data: OAuth2PasswordRequestForm, session):
     SECRET_KEY = config('SECRET_KEY')
@@ -43,13 +48,11 @@ def login_service(form_data: OAuth2PasswordRequestForm, session):
     
 
 def get_all_sales_points_service(session):
-    sales_points = session.query(SalePoints).all()
-    if not sales_points:
-        raise SalePointNotFound("Empty storage")
-    
     result = []
-    for sale_point in sales_points:
-        result.append(SalePointResponseDTO.model_validate(sale_point))
+    sales_points = session.query(SalePoints).all()
+    if sales_points:
+        for sale_point in sales_points:
+            result.append(SalePointResponseDTO.model_validate(sale_point))
     return result
 
 async def logout_service(token, session):
@@ -61,18 +64,19 @@ async def logout_service(token, session):
 
 async def get_sale_point_service(id: int, session):
     sale_point = session.query(SalePoints).filter(SalePoints.id == id).first()
+    if not sale_point:
+        raise SalePointNotFound()
+    
+    return SalePointResponseDTO.model_validate(sale_point)
 
-    if(sale_point):
-        return SalePointResponseDTO.model_validate(sale_point)
-
-def delete_sale_point_service(sale_point_request: SalePointRequestDTO, session):
+async def delete_sale_point_service(sale_point_request: SalePointRequestDTO, token, session):
     sale_point = session.get(SalePoints, sale_point_request.id)
     if not sale_point:
         raise SalePointNotFound()
     sale_point_response = SalePointResponseDTO.model_validate(sale_point)
-    #logout
     session.delete(sale_point)
     session.commit()
+    #await logout_service(token, session)
     return sale_point_response
 
 

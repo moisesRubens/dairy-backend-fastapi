@@ -11,7 +11,7 @@ class SalePoints(Base):
     
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     name = Column("name", String(100))
-    email = Column("email", String(200), nullable=True, unique=True)
+    email = Column("email", String(200), nullable=True, unique=False)
     password = Column("password", String(200))
     order_sale_point = relationship(
         "OrderSalePoint",

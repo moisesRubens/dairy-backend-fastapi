@@ -38,13 +38,16 @@ def get_all_sales_points_controller(session):
         raise HTTPException(200, detail=str(e))
 
 async def get_sale_point(id: int, session):
-    sale_point = await get_sale_point_service(id, session)
-    return sale_point
+    try:
+        sale_point = await get_sale_point_service(id, session)
+        return sale_point
+    except SalePointNotFound as e:
+        raise HTTPException(404, detail=str(e))
 
-def delete_sale_point_controller(id: int, session):
+async def delete_sale_point_controller(id: int, token, session):
     try:
         sale_point_request = SalePointRequestDTO(id=id)
-        sale_point_response = delete_sale_point_service(sale_point_request, session)
+        sale_point_response = await delete_sale_point_service(sale_point_request, token, session)
         return sale_point_response
     except SalePointNotFound as e:
         raise HTTPException(200, detail=str(e))

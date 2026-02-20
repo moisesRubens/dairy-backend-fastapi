@@ -43,13 +43,11 @@ def login_service(form_data: OAuth2PasswordRequestForm, session):
     
 
 def get_all_sales_points_service(session):
-    sales_points = session.query(SalePoints).all()
-    if not sales_points:
-        raise SalePointNotFound("Empty storage")
-    
     result = []
-    for sale_point in sales_points:
-        result.append(SalePointResponseDTO.model_validate(sale_point))
+    sales_points = session.query(SalePoints).all()
+    if sales_points:
+        for sale_point in sales_points:
+            result.append(SalePointResponseDTO.model_validate(sale_point))
     return result
 
 

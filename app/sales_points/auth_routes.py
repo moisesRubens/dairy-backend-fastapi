@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sales_points.sale_point_dependencies import make_session, validate_token, oauth2_scheme
 from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller
@@ -20,6 +20,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], sess
 @auth_router.get("/")
 async def index(user = Depends(validate_token), session = (Depends(make_session))):
     return get_all_sales_points_controller(session)
+    
 
 @auth_router.get("/{id}")
 async def show(id: int, user = Depends(validate_token), session = Depends(make_session)):
@@ -34,6 +35,6 @@ async def logout(token: Annotated[str, Depends(oauth2_scheme)], user_data = Depe
 
 
 @auth_router.delete("/{id}")
-async def destroy(id: int, user = Depends(validate_token), session = Depends(make_session)):
-    sale_point_response = delete_sale_point_controller(id, session)
+async def destroy(id: int, token: Annotated[str, Depends(oauth2_scheme)], user = Depends(validate_token), session = Depends(make_session)):
+    sale_point_response = await delete_sale_point_controller(id, token, session)
     return {"sale point deleted": sale_point_response}

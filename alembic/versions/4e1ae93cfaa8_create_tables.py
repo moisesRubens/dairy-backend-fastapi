@@ -42,10 +42,9 @@ def upgrade() -> None:
     op.create_table('sales_points',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=100), nullable=True),
-    sa.Column('email', sa.String(length=200), nullable=True),
+    sa.Column('email', sa.String(length=200), nullable=True, unique=False),
     sa.Column('password', sa.String(length=200), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('tokens',
     sa.Column('id', sa.String(), nullable=False),

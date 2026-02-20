@@ -4,12 +4,14 @@ from datetime import datetime
 from pydantic import Field, ConfigDict
 
 class SalePointResponseDTO(BaseModel):
-    id: int
-    name: str
-    email: str
+    id: int | None
+    name: str | None
+    email: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True
+    )
 
 
 class SalePointRequestDTO(BaseModel):
