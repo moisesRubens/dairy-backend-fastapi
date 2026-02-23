@@ -23,7 +23,7 @@ def delete_product_service(session, id):
     return product_data
 
 def create_product_service(name, price, amount, kg, liters, session):
-    if ((kg and liters) or (kg and  amount) or (amount and liters)):
+    if not validate_product:
         raise HTTPException(404, "Invalid inputs") 
     
     if session.query(Product).filter(func.upper(Product.name) == name.upper()).first():
@@ -38,3 +38,6 @@ def create_product_service(name, price, amount, kg, liters, session):
     session.commit()
     
     return ProductResponseDTO.model_validate(product)
+
+def validate_product(amount, kg, liters):
+    return  not (kg and amount) or (kg and liters) or (amount and liters)
