@@ -14,22 +14,26 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
     sale_point = session.get(SalePoints, user['sub'])
 
     for item in order_data.items:
-        if not validate_product(item.amount, item.kg, item.liters):
-            raise HTTPException(404, "invalid inputs")
         product = session.get(Product, item.product_id)
-        if not validate_item_order_request(item, product):
+        obj = validate_item_order_request(item, product)
+        
+        if not validate_product(item.amount, item.kg, item.liters) or not obj:
             raise HTTPException(404, "invalid inputs")
         
-        if item.amount is not None and product.amount is not None:
-            total_value += item.amount * product.price
-            product.amount = product.amount - item.amount
-        elif item.kg is not None and product.kg is not None:
-            total_value += item.kg * product.price
-            product.kg = product.kg - item.kg
-        elif item.liters is not None and product.liters is not None:
-            total_value += item.liters * product.price
+        if product.amount:
+            if product.amount < item.amount:
+                raise HTTPException(409, detail="Insuficiente")    
+            product.amount -= item.amount
+        elif product.kg:
+            if product.kg < item.kg:
+                raise HTTPException(409, detail="Insuficiente")   
+            product.kg -= item.kg
+        elif product.liters:
+            if product.liters < item.liters:
+                raise HTTPException(409, detail="Insuficiente")   
             product.liters -= item.liters
-
+            
+        total_value += obj*product.price
         item_order = ItemsOrder(
             order_id=order.id,
             product_id=item.product_id,
@@ -39,6 +43,7 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
             liters=item.liters
         )
         session.add(item_order)
+        order.item_order.append(item_order)
 
     order.total_value = total_value
     order_sale_point = OrderSalePoint()
@@ -74,16 +79,13 @@ def delete_order_service(id: int, session):
     return order_data
 
 def validate_item_order_request(item_order_request, product):
-    valid = True
+    obj = None
     
     if item_order_request.amount:
-        if not product.amount:
-            valid = False
+        obj = product.amount if product.amount else None
     if item_order_request.kg:
-        if not product.kg:
-            valid = False
+        obj = product.kg if product.kg else None
     if item_order_request.liters:
-        if not product.liters:
-            valid = False
-    return valid
+        obj = product.liters if product.liters else None
+    return obj
     

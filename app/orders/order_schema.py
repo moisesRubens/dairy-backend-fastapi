@@ -27,7 +27,7 @@ class OrderResponse(BaseModel):
     total_value: float
     description: str | None = None
     date: datetime = Field(alias='order_date')
-    items: List[ItemOrderResponseDTO] | None = []
+    items: List[ItemOrderResponseDTO] = Field(alias="item_order")
 
     model_config = ConfigDict(
         from_attributes=True, populate_by_name=True

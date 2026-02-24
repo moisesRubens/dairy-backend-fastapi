@@ -41,3 +41,4 @@ def create_product_service(name, price, amount, kg, liters, session):
 
 def validate_product(amount, kg, liters):
     return  not (kg and amount) or (kg and liters) or (amount and liters)
+
