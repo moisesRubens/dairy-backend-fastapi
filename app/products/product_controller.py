@@ -1,4 +1,4 @@
-from products.product_service import delete_product_service, create_product_service, get_all_products_service
+from products.product_service import delete_product_service, create_product_service, get_all_products_service, delete_all_products_service
 from fastapi import HTTPException
 from products.ProductExceptions import ExistingProductException, ProductNotFound
 
@@ -10,6 +10,12 @@ def delete_product_controller(session, id):
         raise HTTPException(404, "Product not found")
     except Exception as e:
         raise e
+    
+def delete_all_products_controller(session):
+    try: 
+        delete_all_products_service(session)
+    except Exception as e:
+        raise HTTPException(500, detail=str(e))
     
 def create_product_controller(name, price, amount, kg, liters, session):
     try:

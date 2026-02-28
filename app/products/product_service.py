@@ -22,6 +22,17 @@ def delete_product_service(session, id):
     session.commit() 
     return product_data
 
+def delete_all_products_service(session):
+    try:
+        session.query(Product).delete(synchronize_session="fetch")
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
+
+
 def create_product_service(name, price, amount, kg, liters, session):
     if not validate_product:
         raise HTTPException(404, "Invalid inputs") 
