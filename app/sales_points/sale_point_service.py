@@ -55,6 +55,16 @@ def get_all_sales_points_service(session):
             result.append(SalePointResponseDTO.model_validate(sale_point))
     return result
 
+def delete_all_sales_points_service(session):
+    try:
+        session.query(SalePoints).delete(synchronize_session="fetch")
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e 
+    finally:
+        session.close()
+
 async def logout_service(token, session):
     revoked_token = Token()
     revoked_token.id = token
@@ -68,6 +78,7 @@ async def get_sale_point_service(id: int, session):
         raise SalePointNotFound()
     
     return SalePointResponseDTO.model_validate(sale_point)
+
 
 async def delete_sale_point_service(sale_point_request: SalePointRequestDTO, token, session):
     sale_point = session.get(SalePoints, sale_point_request.id)

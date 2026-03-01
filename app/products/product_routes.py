@@ -22,6 +22,6 @@ async def destroy(id: int, user = Depends(validate_token), session = Depends(mak
 
 
 @product_router.delete("/")
-async def destroy(user = Depends(validate_token), session = Depends(make_session)):
+async def delete_all(user = Depends(validate_token), session = Depends(make_session)):
     delete_all_products_controller(session)
     return {"message": "Excluded products"}

@@ -1,4 +1,4 @@
-from sales_points.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service
+from sales_points.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service, delete_all_sales_points_service
 from fastapi.security import OAuth2PasswordRequestForm
 from sales_points.sale_point_exceptions import ExistingSalePointException, SalePointNotFound
 from fastapi import HTTPException
@@ -51,3 +51,9 @@ async def delete_sale_point_controller(id: int, token, session):
         return sale_point_response
     except SalePointNotFound as e:
         raise HTTPException(200, detail=str(e))
+
+def delete_all_sales_points_controller(session):
+    try:
+        delete_all_sales_points_service(session)
+    except Exception as e:
+        raise HTTPException(500, detail=str(e))
