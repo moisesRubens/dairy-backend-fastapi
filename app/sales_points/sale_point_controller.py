@@ -57,3 +57,4 @@ def delete_all_sales_points_controller(session):
         delete_all_sales_points_service(session)
     except Exception as e:
         raise HTTPException(500, detail=str(e))
+    

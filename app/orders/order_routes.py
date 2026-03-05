@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sales_points.sale_point_dependencies import  validate_token
 from dependecies import make_session
 from orders.order_schema import OrderRequestDTO
-from orders.order_controller import create_order_controller, get_all_orders_controller, delete_order_controller
+from orders.order_controller import create_order_controller, get_all_orders_controller, delete_order_controller, delete_all_orders_controller
 
 order_router = APIRouter(prefix="/pedidos", tags=["Order"])
 
@@ -20,4 +20,9 @@ async def store(order_data: OrderRequestDTO, user = Depends(validate_token), ses
 async def destroy(id: int, session = Depends(make_session), user = Depends(validate_token)):
         order = delete_order_controller(id, session)
         return {"pedido excluido": order}
+        
+@order_router.delete("/")
+async def delete_all(user = Depends(validate_token), session = Depends(make_session)):
+        delete_all_orders_controller(session)
+        return {"message": "Orders excluded"}
         

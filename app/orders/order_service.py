@@ -3,7 +3,7 @@ from orders.order_schema import OrderResponse, OrderRequestDTO, ItemOrderRespons
 from fastapi import HTTPException
 from products.product_service import validate_product
 
-def create_order_service(order_data: OrderRequestDTO, user, session):
+def create_order_service(order_data: OrderRequestDTO, user, session):    
     order = Order()
     total_value = 0.0
     order.total_value = total_value
@@ -54,6 +54,7 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
     session.refresh(order)
 
     order_response = OrderResponse.model_validate(order)
+    
     return order_response
 
 
@@ -78,14 +79,26 @@ def delete_order_service(id: int, session):
     session.commit()
     return order_data
 
+def delete_all_orders_service(session):
+    try:
+        session.query(OrderSalePoint).delete(synchronize_session="fetch")
+        session.query(ItemsOrder).delete(synchronize_session="fetch")
+        session.query(Order).delete(synchronize_session="fetch")
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
+
 def validate_item_order_request(item_order_request, product):
     obj = None
     
     if item_order_request.amount:
-        obj = product.amount if product.amount else None
+        obj = item_order_request.amount if product.amount else None
     if item_order_request.kg:
-        obj = product.kg if product.kg else None
+        obj = item_order_request.kg if product.kg else None
     if item_order_request.liters:
-        obj = product.liters if product.liters else None
+        obj = item_order_request.liters if product.liters else None
     return obj
     
