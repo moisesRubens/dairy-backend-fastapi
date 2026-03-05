@@ -43,7 +43,6 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
             liters=item.liters
         )
         session.add(item_order)
-        order.item_order.append(item_order)
 
     order.total_value = total_value
     order_sale_point = OrderSalePoint()
@@ -63,9 +62,6 @@ def get_all_orders_service(session):
     result = []
     for order in orders:
         order_data = OrderResponse.model_validate(order)
-        items = session.query(ItemsOrder).filter(ItemsOrder.order_id==order.id).all()
-        for item in items:
-            order_data.items.append(ItemOrderResponseDTO.model_validate(item))
         result.append(order_data)
     return result
 
