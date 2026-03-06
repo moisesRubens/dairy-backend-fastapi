@@ -18,6 +18,7 @@ class SalePoints(Base):
         cascade="all, delete-orphan",
         back_populates="sale_point"
     )
+    retiradas = relationship("RetiradaProduto", back_populates="sale_point", cascade="all, delete-orphan")
         
 class Order(Base):
     __tablename__ = "orders"
@@ -57,6 +58,7 @@ class Product(Base):
         back_populates="product",
         passive_deletes=True
     )
+    retiradas = relationship("RetiradaProduto", back_populates="product", cascade="all, delete-orphan")
         
 class ItemsOrder(Base):
     __tablename__ = "item_order"
@@ -95,3 +97,18 @@ class Token(Base):
     __tablename__ = 'tokens'
 
     id = Column(String, primary_key=True)
+
+class RetiradaProduto(Base):
+    __tablename__ = "retiradas_produto"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    sale_point_id = Column(Integer, ForeignKey("sales_points.id", ondelete="CASCADE"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
+    quantidade = Column(Float, nullable=False)
+    unidade = Column(String(10), nullable=False)  # 'amount', 'kg', 'liters'
+    observacao = Column(String(200), nullable=True)
+    data = Column(DateTime, default=lambda: datetime.now(ZoneInfo("America/Sao_Paulo")))
+    
+    # Relacionamentos
+    sale_point = relationship("SalePoints", back_populates="retiradas")
+    product = relationship("Product", back_populates="retiradas")

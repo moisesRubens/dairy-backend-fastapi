@@ -8,10 +8,19 @@ class ProductResponseDTO(BaseModel):
     name: str
     price: float
     amount: int | None = None
-    kg: int | None = None
-    liters: int | None = None
+    kg: float | None = None
+    liters: float | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
         populate_by_name=True
     )
+
+class ItemRetiradaDTO(BaseModel):
+    product_id: int
+    quantidade: float
+    unidade: str  # 'amount', 'kg', 'liters'
+
+class RetirarProdutosRequestDTO(BaseModel):
+    produtos: List[ItemRetiradaDTO]
+    observacao: Optional[str] = None
