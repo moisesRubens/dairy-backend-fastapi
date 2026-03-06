@@ -6,8 +6,8 @@ def create_order_controller(order_data: OrderRequestDTO, user, session):
     
     return order_response_data
 
-def get_all_orders_controller(session, user):
-    return get_all_orders_service(session, user)
+def get_all_orders_controller(session, user, date, description, status):
+    return get_all_orders_service(session, user, date, description, status)
 
 def delete_order_controller(id, session):
     return delete_order_service(id, session)

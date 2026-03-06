@@ -7,9 +7,10 @@ from orders.order_controller import create_order_controller, get_all_orders_cont
 order_router = APIRouter(prefix="/pedidos", tags=["Order"])
 
 @order_router.get("/")
-def index(user = Depends(validate_token), session = Depends(make_session)): 
-    orders = get_all_orders_controller(session, user)
+def index(date=None, description=None, status=None, user = Depends(validate_token), session = Depends(make_session)): 
+    orders = get_all_orders_controller(session, user, date, description, status)
     return {"orders": orders}
+
 
 @order_router.post("/cadastrar")
 async def store(order_data: OrderRequestDTO, user = Depends(validate_token), session = Depends(make_session)):

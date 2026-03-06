@@ -2,6 +2,8 @@ from model import Order, ItemsOrder, Product, SalePoints, OrderSalePoint
 from orders.order_schema import OrderResponse, OrderRequestDTO, ItemOrderResponseDTO
 from fastapi import HTTPException
 from products.product_service import validate_product
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 def create_order_service(order_data: OrderRequestDTO, user, session):    
     order = Order()
@@ -57,9 +59,30 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
     return order_response
 
 
-def get_all_orders_service(session, user):
+from sqlalchemy import func
+from datetime import datetime, timedelta
+
+def get_all_orders_service(session, user, date=None, description=None, status=None):
     sale_point_orders = session.query(OrderSalePoint.order_id).filter(OrderSalePoint.sale_point_id == user['sub']).subquery()
-    orders = session.query(Order).filter(Order.id.in_(sale_point_orders))
+    query = session.query(Order).filter(Order.id.in_(sale_point_orders))
+    
+    if status is not None:
+        query = query.filter(Order.status == status)
+    if description:
+        query = query.filter(Order.description.ilike(f'%{description}%'))
+    if date:
+        filter_date = datetime.strptime(date, '%Y-%m-%d').date()
+        start_of_day = datetime.combine(filter_date, datetime.min.time()).replace(
+            tzinfo=ZoneInfo("America/Sao_Paulo")
+        )
+        end_of_day = datetime.combine(filter_date, datetime.max.time()).replace(
+            tzinfo=ZoneInfo("America/Sao_Paulo")
+        )
+        query = query.filter(
+            Order.order_date >= start_of_day,
+            Order.order_date <= end_of_day
+        )
+    orders = query.all()
     result = []
     for order in orders:
         order_data = OrderResponse.model_validate(order)
