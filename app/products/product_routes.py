@@ -6,7 +6,7 @@ from products.product_controller import delete_product_controller, create_produc
 product_router = APIRouter(prefix="/produto", tags=["Product"])
 
 @product_router.get("/")
-async def index(session = Depends(make_session)):
+async def index(user = Depends(validate_token), session = Depends(make_session)):
     products = get_all_products_controller(session)
     return {"products": products}
 

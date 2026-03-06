@@ -8,7 +8,7 @@ order_router = APIRouter(prefix="/pedidos", tags=["Order"])
 
 @order_router.get("/")
 def index(user = Depends(validate_token), session = Depends(make_session)): 
-    orders = get_all_orders_controller(session)
+    orders = get_all_orders_controller(session, user)
     return {"orders": orders}
 
 @order_router.post("/cadastrar")

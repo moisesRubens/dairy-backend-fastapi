@@ -57,8 +57,9 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
     return order_response
 
 
-def get_all_orders_service(session):
-    orders = session.query(Order).all()
+def get_all_orders_service(session, user):
+    sale_point_orders = session.query(OrderSalePoint.order_id).filter(OrderSalePoint.sale_point_id == user['sub']).subquery()
+    orders = session.query(Order).filter(Order.id.in_(sale_point_orders))
     result = []
     for order in orders:
         order_data = OrderResponse.model_validate(order)
