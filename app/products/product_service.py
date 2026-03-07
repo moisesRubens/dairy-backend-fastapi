@@ -1,8 +1,9 @@
 from model import Product, RetiradaProduto
-from products.product_schema import ProductResponseDTO
+from products.product_schema import ProductResponseDTO, ItemRetiradaDTO
 from products.ProductExceptions import ExistingProductException, ProductNotFound
 from sqlalchemy import func
 from fastapi import HTTPException
+from typing import List
 
 def get_all_products_service(session):
     result = []
@@ -153,53 +154,139 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
 
 
 def get_products_by_sale_point_service(session, user):
+    # Busca todas as retiradas do ponto de venda
     retiradas = session.query(RetiradaProduto).filter(
         RetiradaProduto.sale_point_id == user['sub']
     ).order_by(RetiradaProduto.data.desc()).all()
     
-    result = []
+    # Dicionário para agrupar por produto
+    produtos_agrupados = {}
+    
     for retirada in retiradas:
         product = session.query(Product).get(retirada.product_id)
         if product:
-            product_data = ProductResponseDTO.model_validate(product)
-            # Adiciona informações da retirada
-            product_dict = product_data.dict()
-            product_dict.update({
-                "quantidade_retirada": retirada.quantidade,
-                "unidade_retirada": retirada.unidade,
-                "data_retirada": retirada.data.isoformat(),
-                "observacao": retirada.observacao,
-                "sale_point_id": retirada.sale_point_id  # 🔥 ADICIONADO: ID do ponto de venda
+            # Chave única: product_id + unidade (para não misturar kg com units)
+            chave = f"{product.id}_{retirada.unidade}"
+            
+            if chave not in produtos_agrupados:
+                # Primeira vez que vê este produto
+                product_data = ProductResponseDTO.model_validate(product)
+                product_dict = product_data.dict()
+                product_dict.update({
+                    "quantidade_retirada": retirada.quantidade,
+                    "unidade_retirada": retirada.unidade,
+                    "data_retirada": retirada.data.isoformat(),  # Pega a data mais recente
+                    "observacao": retirada.observacao,
+                    "sale_point_id": retirada.sale_point_id,
+                    "total_retiradas": 1  # Contador de quantas vezes retirou
+                })
+                produtos_agrupados[chave] = product_dict
+            else:
+                # Já existe, soma a quantidade
+                produtos_agrupados[chave]["quantidade_retirada"] += retirada.quantidade
+                produtos_agrupados[chave]["total_retiradas"] += 1
+                # Mantém a data mais recente
+                if retirada.data.isoformat() > produtos_agrupados[chave]["data_retirada"]:
+                    produtos_agrupados[chave]["data_retirada"] = retirada.data.isoformat()
+    
+    # Converte o dicionário para lista e ordena por data (mais recente primeiro)
+    result = list(produtos_agrupados.values())
+    result.sort(key=lambda x: x["data_retirada"], reverse=True)
+    
+    return result
+
+def subtrair_estoque_service(session, sale_point_id: int, items: List[ItemRetiradaDTO]):
+    sucessos = []
+    erros = []
+    
+    for item in items:
+        try:
+            # Busca o produto - item é um objeto ItemRetiradaDTO, use item.product_id
+            product = session.query(Product).filter(Product.id == item.product_id).first()
+            
+            if not product:
+                erros.append({
+                    "product_id": item.product_id,
+                    "erro": "Produto não encontrado"
+                })
+                continue
+            
+            # Subtrai baseado na unidade
+            if item.unidade == 'amount':
+                if product.amount < item.quantidade:
+                    erros.append({
+                        "product_id": item.product_id,
+                        "nome": product.name,
+                        "erro": f"Estoque insuficiente: disponível {product.amount} unidades"
+                    })
+                    continue
+                product.amount -= item.quantidade
+                
+            elif item.unidade == 'kg':
+                if product.kg < item.quantidade:
+                    erros.append({
+                        "product_id": item.product_id,
+                        "nome": product.name,
+                        "erro": f"Estoque insuficiente: disponível {product.kg} kg"
+                    })
+                    continue
+                product.kg -= item.quantidade
+                
+            elif item.unidade == 'liters':
+                if product.liters < item.quantidade:
+                    erros.append({
+                        "product_id": item.product_id,
+                        "nome": product.name,
+                        "erro": f"Estoque insuficiente: disponível {product.liters} litros"
+                    })
+                    continue
+                product.liters -= item.quantidade
+            
+            # Registra a retirada
+            retirada = RetiradaProduto(
+                sale_point_id=sale_point_id,
+                product_id=item.product_id,
+                quantidade=item.quantidade,
+                unidade=item.unidade,
+                observacao="Subtraído por pedido"
+            )
+            session.add(retirada)
+            
+            sucessos.append({
+                "product_id": item.product_id,
+                "nome": product.name,
+                "quantidade": item.quantidade,
+                "unidade": item.unidade,
+                "estoque_restante": get_estoque_restante(product, item.unidade)
             })
-            result.append(product_dict)
+            
+        except Exception as e:
+            erros.append({
+                "product_id": item.product_id if hasattr(item, 'product_id') else 'unknown',
+                "erro": f"Erro inesperado: {str(e)}"
+            })
     
-    return result
-
-
-def get_all_products_service(session):
-    """
-    Service para buscar todos os produtos (estoque total)
-    """
-    products = session.query(Product).all()
-    result = []
+    if sucessos:
+        session.commit()
     
-    for product in products:
-        product_data = ProductResponseDTO.model_validate(product)
-        result.append(product_data)
-    
-    return result
+    return {
+        "sucessos": sucessos,
+        "erros": erros,
+        "total_sucessos": len(sucessos),
+        "total_erros": len(erros)
+    }
 
-
-def get_estoque_restante(product: Product, unidade: str) -> float:
+# Adicione esta função auxiliar no product_service.py
+def get_estoque_restante(product, unidade: str):
     """
-    Helper para retornar o estoque restante na unidade especificada
+    Retorna a quantidade restante no estoque para uma determinada unidade
     """
     if unidade == 'amount':
-        return product.amount or 0
+        return product.amount
     elif unidade == 'kg':
-        return product.kg or 0
+        return product.kg
     elif unidade == 'liters':
-        return product.liters or 0
+        return product.liters
     return 0
 
 def get_all_retiradas_service(session):

@@ -109,6 +109,5 @@ class RetiradaProduto(Base):
     observacao = Column(String(200), nullable=True)
     data = Column(DateTime, default=lambda: datetime.now(ZoneInfo("America/Sao_Paulo")))
     
-    # Relacionamentos
     sale_point = relationship("SalePoints", back_populates="retiradas")
     product = relationship("Product", back_populates="retiradas")

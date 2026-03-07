@@ -1,6 +1,8 @@
-from products.product_service import delete_product_service, create_product_service, get_all_products_service, delete_all_products_service, get_products_by_sale_point_service, retirar_produtos_service, get_products_service, get_all_retiradas_service
+from products.product_service import delete_product_service, create_product_service, get_all_products_service, delete_all_products_service, get_products_by_sale_point_service, retirar_produtos_service, get_products_service, get_all_retiradas_service,subtrair_estoque_service
 from fastapi import HTTPException
 from products.ProductExceptions import ExistingProductException, ProductNotFound
+from typing import List
+from products.product_schema import ItemRetiradaDTO
 
 def delete_product_controller(session, id):
     try:
@@ -89,3 +91,16 @@ def get_all_retiradas_controller(session: Session):
         return retiradas
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar retiradas: {str(e)}")
+    
+def subtrair_estoque_controller(session, sale_point_id: int, items: List[ItemRetiradaDTO]):
+    """
+    Controlador para subtrair itens do estoque
+    """
+    try:
+        # Os items já são objetos ItemRetiradaDTO, não precisa converter
+        resultado = subtrair_estoque_service(session, sale_point_id, items)
+        return resultado
+        
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao subtrair estoque: {str(e)}")
