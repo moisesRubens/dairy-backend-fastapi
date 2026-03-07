@@ -63,9 +63,6 @@ def validate_product(amount, kg, liters):
     return  not (kg and amount) or (kg and liters) or (amount and liters)
 
 def retirar_produtos_service(session, sale_point_id: int, produtos: list, observacao: str = None):
-    """
-    Service para processar a retirada de produtos do estoque
-    """
     sucessos = []
     erros = []
     
@@ -155,13 +152,9 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
     }
 
 
-def get_products_by_sale_point_service(session, sale_point_id: int):
-    """
-    Service para buscar produtos retirados por um ponto de venda
-    """
-    # Busca todas as retiradas do ponto de venda
+def get_products_by_sale_point_service(session, user):
     retiradas = session.query(RetiradaProduto).filter(
-        RetiradaProduto.sale_point_id == sale_point_id
+        RetiradaProduto.sale_point_id == user['sub']
     ).order_by(RetiradaProduto.data.desc()).all()
     
     result = []
@@ -175,7 +168,8 @@ def get_products_by_sale_point_service(session, sale_point_id: int):
                 "quantidade_retirada": retirada.quantidade,
                 "unidade_retirada": retirada.unidade,
                 "data_retirada": retirada.data.isoformat(),
-                "observacao": retirada.observacao
+                "observacao": retirada.observacao,
+                "sale_point_id": retirada.sale_point_id  # 🔥 ADICIONADO: ID do ponto de venda
             })
             result.append(product_dict)
     
@@ -207,10 +201,8 @@ def get_estoque_restante(product: Product, unidade: str) -> float:
     elif unidade == 'liters':
         return product.liters or 0
     return 0
+
 def get_all_retiradas_service(session):
-    """
-    Service para buscar todas as retiradas do sistema
-    """
     retiradas = session.query(RetiradaProduto).order_by(
         RetiradaProduto.data.desc()
     ).all()
@@ -218,13 +210,24 @@ def get_all_retiradas_service(session):
     result = []
     for retirada in retiradas:
         product = session.query(Product).get(retirada.product_id)
+        
+        # Calcula o estoque restante baseado no produto e na unidade da retirada
+        estoque_restante = 0
+        if product:
+            if retirada.unidade == 'amount':
+                estoque_restante = product.amount or 0
+            elif retirada.unidade == 'kg':
+                estoque_restante = product.kg or 0
+            elif retirada.unidade == 'liters':
+                estoque_restante = product.liters or 0
+        
         result.append({
             "id": retirada.id,
             "product_id": retirada.product_id,
             "nome": product.name if product else "Produto não encontrado",
             "quantidade": retirada.quantidade,
             "unidade": retirada.unidade,
-            "estoque_restante": retirada.estoque_restante,
+            "estoque_restante": estoque_restante,  # Agora calculado corretamente
             "data_retirada": retirada.data.isoformat() if retirada.data else None,
             "observacao": retirada.observacao,
             "sale_point_id": retirada.sale_point_id
