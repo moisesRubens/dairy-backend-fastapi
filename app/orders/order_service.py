@@ -9,6 +9,7 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
     order = Order()
     total_value = 0.0
     order.total_value = total_value
+    order.status = True
     order.description = order_data.description
     session.add(order)
     session.flush()

@@ -69,7 +69,6 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
     
     for item in produtos:
         try:
-            # Busca o produto
             product = session.query(Product).filter(Product.id == item.product_id).first()
             
             if not product:
@@ -118,14 +117,18 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
                 continue
             
             # Registra a retirada na tabela de log
-            retirada = RetiradaProduto(
-                sale_point_id=sale_point_id,
-                product_id=item.product_id,
-                quantidade=item.quantidade,
-                unidade=item.unidade,
-                observacao=observacao
-            )
-            session.add(retirada)
+            has_retirada = session.query(RetiradaProduto).filter(RetiradaProduto.product_id == item.product_id, RetiradaProduto.sale_point_id == sale_point_id).first()
+            if(has_retirada):
+                has_retirada.quantidade += item.quantidade
+            else:
+                retirada = RetiradaProduto(
+                    sale_point_id=sale_point_id,
+                    product_id=item.product_id,
+                    quantidade=item.quantidade,
+                    unidade=item.unidade,
+                    observacao=observacao
+                )
+                session.add(retirada)
             session.commit()
             sucessos.append({
                 "product_id": item.product_id,
@@ -140,8 +143,6 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
                 "product_id": item.product_id,
                 "erro": f"Erro inesperado: {str(e)}"
             })
-    
-    # Se houve pelo menos um sucesso, faz commit
     if sucessos:
         session.commit()
     

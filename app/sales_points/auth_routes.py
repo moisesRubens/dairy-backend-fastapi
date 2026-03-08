@@ -27,6 +27,12 @@ async def show(id: int, user = Depends(validate_token), session = Depends(make_s
     sale_point = await get_sale_point(id, session)
     return {"sale_points": sale_point}    
 
+@auth_router.get("/sales_points")
+async def get_sales_points_controller(user = Depends(validate_token), session = Depends(make_session)):
+    result = []
+    return result
+
+
 
 @auth_router.post("/logout")
 async def logout(token: Annotated[str, Depends(oauth2_scheme)], user_data = Depends(validate_token), session = Depends(make_session)):
