@@ -211,7 +211,6 @@ def subtrair_estoque_service(session, sale_point_id: int, items: List[ItemRetira
         session.rollback()
         raise
     finally:
-        print("bBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
         session.close()
 
 def get_estoque_restante(product, unidade: str):

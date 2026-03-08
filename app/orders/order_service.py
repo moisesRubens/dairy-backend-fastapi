@@ -1,4 +1,4 @@
-from model import Order, ItemsOrder, Product, SalePoints, OrderSalePoint
+from model import Order, ItemsOrder, Product, SalePoints, OrderSalePoint, RetiradaProduto
 from orders.order_schema import OrderResponse, OrderRequestDTO, ItemOrderResponseDTO
 from fastapi import HTTPException
 from products.product_service import validate_product
@@ -16,6 +16,7 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
     sale_point = session.get(SalePoints, user['sub'])
 
     for item in order_data.items:
+        retirada = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id==user['sub'], RetiradaProduto.product_id==item.product_id).first()
         product = session.get(Product, item.product_id)
         obj = validate_item_order_request(item, product)
         
@@ -23,17 +24,17 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
             raise HTTPException(404, "invalid inputs")
         
         if product.amount:
-            if product.amount < item.amount:
+            if retirada.quantidade < item.amount:
                 raise HTTPException(409, detail="Insuficiente")    
-            product.amount -= item.amount
+            retirada.quantidade -= item.amount
         elif product.kg:
-            if product.kg < item.kg:
+            if retirada.quantidade < item.kg:
                 raise HTTPException(409, detail="Insuficiente")   
-            product.kg -= item.kg
+            retirada.quantidade -= item.kg
         elif product.liters:
-            if product.liters < item.liters:
+            if retirada.quantidade < item.liters:
                 raise HTTPException(409, detail="Insuficiente")   
-            product.liters -= item.liters
+            retirada.quantidade -= item.liters
             
         total_value += obj*product.price
         item_order = ItemsOrder(
