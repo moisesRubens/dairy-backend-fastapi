@@ -19,7 +19,7 @@ class ProductResponseDTO(BaseModel):
 class ItemRetiradaDTO(BaseModel):
     product_id: int
     quantidade: float
-    unidade: str  # 'amount', 'kg', 'liters'
+    unidade: str  
 
 class RetirarProdutosRequestDTO(BaseModel):
     produtos: List[ItemRetiradaDTO]

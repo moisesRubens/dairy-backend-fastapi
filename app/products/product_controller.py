@@ -93,11 +93,7 @@ def get_all_retiradas_controller(session: Session):
         raise HTTPException(status_code=500, detail=f"Erro ao buscar retiradas: {str(e)}")
     
 def subtrair_estoque_controller(session, sale_point_id: int, items: List[ItemRetiradaDTO]):
-    """
-    Controlador para subtrair itens do estoque
-    """
     try:
-        # Os items já são objetos ItemRetiradaDTO, não precisa converter
         resultado = subtrair_estoque_service(session, sale_point_id, items)
         return resultado
         

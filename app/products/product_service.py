@@ -126,7 +126,7 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
                 observacao=observacao
             )
             session.add(retirada)
-            
+            session.commit()
             sucessos.append({
                 "product_id": item.product_id,
                 "nome": product.name,
@@ -154,129 +154,66 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
 
 
 def get_products_by_sale_point_service(session, user):
-    # Busca todas as retiradas do ponto de venda
+    result = []
     retiradas = session.query(RetiradaProduto).filter(
         RetiradaProduto.sale_point_id == user['sub']
     ).order_by(RetiradaProduto.data.desc()).all()
-    
-    # Dicionário para agrupar por produto
-    produtos_agrupados = {}
-    
     for retirada in retiradas:
-        product = session.query(Product).get(retirada.product_id)
-        if product:
-            # Chave única: product_id + unidade (para não misturar kg com units)
-            chave = f"{product.id}_{retirada.unidade}"
-            
-            if chave not in produtos_agrupados:
-                # Primeira vez que vê este produto
-                product_data = ProductResponseDTO.model_validate(product)
-                product_dict = product_data.dict()
-                product_dict.update({
-                    "quantidade_retirada": retirada.quantidade,
-                    "unidade_retirada": retirada.unidade,
-                    "data_retirada": retirada.data.isoformat(),  # Pega a data mais recente
-                    "observacao": retirada.observacao,
-                    "sale_point_id": retirada.sale_point_id,
-                    "total_retiradas": 1  # Contador de quantas vezes retirou
-                })
-                produtos_agrupados[chave] = product_dict
-            else:
-                # Já existe, soma a quantidade
-                produtos_agrupados[chave]["quantidade_retirada"] += retirada.quantidade
-                produtos_agrupados[chave]["total_retiradas"] += 1
-                # Mantém a data mais recente
-                if retirada.data.isoformat() > produtos_agrupados[chave]["data_retirada"]:
-                    produtos_agrupados[chave]["data_retirada"] = retirada.data.isoformat()
-    
-    # Converte o dicionário para lista e ordena por data (mais recente primeiro)
-    result = list(produtos_agrupados.values())
-    result.sort(key=lambda x: x["data_retirada"], reverse=True)
-    
+        result.append(retirada)
     return result
 
 def subtrair_estoque_service(session, sale_point_id: int, items: List[ItemRetiradaDTO]):
-    sucessos = []
-    erros = []
-    
-    for item in items:
-        try:
-            # Busca o produto - item é um objeto ItemRetiradaDTO, use item.product_id
-            product = session.query(Product).filter(Product.id == item.product_id).first()
+    try:
+        sucessos = []
+        for item in items:
+            # CORRETO - primeiro filtra, depois compara
+            retirada = session.query(RetiradaProduto).filter(
+                RetiradaProduto.product_id == item.product_id,
+                RetiradaProduto.sale_point_id == sale_point_id
+            ).first()
             
-            if not product:
-                erros.append({
-                    "product_id": item.product_id,
-                    "erro": "Produto não encontrado"
-                })
+            if not retirada:
+                sucessos.append({"message": "retirada não encontrada"})
                 continue
-            
-            # Subtrai baseado na unidade
-            if item.unidade == 'amount':
-                if product.amount < item.quantidade:
-                    erros.append({
-                        "product_id": item.product_id,
-                        "nome": product.name,
-                        "erro": f"Estoque insuficiente: disponível {product.amount} unidades"
-                    })
-                    continue
-                product.amount -= item.quantidade
                 
-            elif item.unidade == 'kg':
-                if product.kg < item.quantidade:
-                    erros.append({
-                        "product_id": item.product_id,
-                        "nome": product.name,
-                        "erro": f"Estoque insuficiente: disponível {product.kg} kg"
-                    })
-                    continue
-                product.kg -= item.quantidade
+            if item.quantidade == retirada.quantidade:
+                session.query(RetiradaProduto).filter(
+                    RetiradaProduto.product_id == item.product_id,
+                    RetiradaProduto.sale_point_id == sale_point_id
+                ).delete(synchronize_session="fetch")
+            elif item.quantidade < retirada.quantidade:
+                retirada.quantidade = retirada.quantidade - item.quantidade
+            else:
+                sucessos.append({"message": "estoque insuficiente"})
+                continue
                 
-            elif item.unidade == 'liters':
-                if product.liters < item.quantidade:
-                    erros.append({
-                        "product_id": item.product_id,
-                        "nome": product.name,
-                        "erro": f"Estoque insuficiente: disponível {product.liters} litros"
-                    })
-                    continue
-                product.liters -= item.quantidade
-            
-            # Registra a retirada
-            retirada = RetiradaProduto(
-                sale_point_id=sale_point_id,
-                product_id=item.product_id,
-                quantidade=item.quantidade,
-                unidade=item.unidade,
-                observacao="Subtraído por pedido"
-            )
-            session.add(retirada)
-            
+            product = session.get(Product, item.product_id)
+            if product.amount is not None:
+                product.amount = product.amount + item.quantidade
+            elif product.kg is not None:
+                product.kg = product.kg + item.quantidade
+            elif product.liters is not None:
+                product.liters = product.liters + item.quantidade
+
             sucessos.append({
                 "product_id": item.product_id,
                 "nome": product.name,
                 "quantidade": item.quantidade,
                 "unidade": item.unidade,
                 "estoque_restante": get_estoque_restante(product, item.unidade)
-            })
+            })   
             
-        except Exception as e:
-            erros.append({
-                "product_id": item.product_id if hasattr(item, 'product_id') else 'unknown',
-                "erro": f"Erro inesperado: {str(e)}"
-            })
-    
-    if sucessos:
+        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         session.commit()
-    
-    return {
-        "sucessos": sucessos,
-        "erros": erros,
-        "total_sucessos": len(sucessos),
-        "total_erros": len(erros)
-    }
+        return sucessos
+    except Exception as e:
+        print(f"Erro: {e}")
+        session.rollback()
+        raise
+    finally:
+        print("bBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+        session.close()
 
-# Adicione esta função auxiliar no product_service.py
 def get_estoque_restante(product, unidade: str):
     """
     Retorna a quantidade restante no estoque para uma determinada unidade
