@@ -16,7 +16,10 @@ async def validate_token(token: Annotated[str, Depends(oauth2_scheme)], session 
         SECRET_KEY = config('SECRET_KEY')
         ALGORITHM = config('ALGORITHM')
         user_data = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if not session.get(SalePoints, user_data.get("sub")):
+        sale_point_id = int(user_data.get("sub"))  
+        sale_point = session.get(SalePoints, sale_point_id)
+
+        if not sale_point:
             raise SalePointNotFound()
         if session.get(Token, token):
             raise ExpiredTokenException('Token expired')

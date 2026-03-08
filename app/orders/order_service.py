@@ -18,21 +18,22 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
 
     for item in order_data.items:
         retirada = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id==user['sub'], RetiradaProduto.product_id==item.product_id).first()
+        retirada = session.query(RetiradaProduto).filter(RetiradaProduto.product_id == item.product_id, RetiradaProduto.sale_point_id == user['sub']).first()
+        obj = validate_item_order_request(item, retirada)
         product = session.get(Product, item.product_id)
-        obj = validate_item_order_request(item, product)
-        
         if not validate_product(item.amount, item.kg, item.liters) or not obj:
             raise HTTPException(404, "invalid inputs")
         
-        if product.amount:
+        if product.amount is not None:
+            print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
             if retirada.quantidade < item.amount:
                 raise HTTPException(409, detail="Insuficiente")    
             retirada.quantidade -= item.amount
-        elif product.kg:
+        elif product.kg is not None:
             if retirada.quantidade < item.kg:
                 raise HTTPException(409, detail="Insuficiente")   
             retirada.quantidade -= item.kg
-        elif product.liters:
+        elif product.liters is not None:
             if retirada.quantidade < item.liters:
                 raise HTTPException(409, detail="Insuficiente")   
             retirada.quantidade -= item.liters
@@ -117,10 +118,10 @@ def validate_item_order_request(item_order_request, product):
     obj = None
     
     if item_order_request.amount:
-        obj = item_order_request.amount if product.amount else None
+        obj = item_order_request.amount if product.quantidade else None
     if item_order_request.kg:
-        obj = item_order_request.kg if product.kg else None
+        obj = item_order_request.kg if product.quantidade else None
     if item_order_request.liters:
-        obj = item_order_request.liters if product.liters else None
+        obj = item_order_request.liters if product.quantidade else None
     return obj
     
