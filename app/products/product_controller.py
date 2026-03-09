@@ -66,9 +66,9 @@ def retirar_produtos_controller(session: Session, sale_point_id: int, produtos: 
         raise HTTPException(status_code=500, detail=f"Erro interno ao processar retirada: {str(e)}")
 
 
-def get_products_by_sale_point_controller(session: Session, user):
+def get_products_by_sale_point_controller(sale_point_id, session: Session, user):
     try:
-        products = get_products_by_sale_point_service(session, user)
+        products = get_products_by_sale_point_service(sale_point_id, session, user)
         return products
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar produtos: {str(e)}")

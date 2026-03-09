@@ -154,10 +154,11 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
     }
 
 
-def get_products_by_sale_point_service(session, user):
+def get_products_by_sale_point_service(sale_point_id, session, user):
     result = []
+    id = sale_point_id if sale_point_id else user['sub']
     retiradas = session.query(RetiradaProduto).filter(
-        RetiradaProduto.sale_point_id == user['sub']
+        RetiradaProduto.sale_point_id == id
     ).order_by(RetiradaProduto.data.desc()).all()
     for retirada in retiradas:
         result.append(retirada)

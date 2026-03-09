@@ -22,8 +22,8 @@ async def retirar_produtos(
     return result
 
 @product_router.get("/retiradas")
-async def list_all(user = Depends(validate_token), session = Depends(make_session)):
-    result = get_products_by_sale_point_controller(session, user)
+async def list_all(sale_point_id: int = None, user = Depends(validate_token), session = Depends(make_session)):
+    result = get_products_by_sale_point_controller(sale_point_id, session, user)
     return {"retiradas": result}
 
 @product_router.post("/subtrair-estoque")
