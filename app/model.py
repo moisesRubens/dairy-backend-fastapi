@@ -104,10 +104,12 @@ class RetiradaProduto(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     sale_point_id = Column(Integer, ForeignKey("sales_points.id", ondelete="CASCADE"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
-    quantidade = Column(Float, nullable=False)
-    unidade = Column(String(10), nullable=False)  # 'amount', 'kg', 'liters'
+    taken_quantity = Column(Float, nullable=False)
+    unidade = Column(String(10), nullable=False)  
     observacao = Column(String(200), nullable=True)
     data = Column(DateTime, default=lambda: datetime.now(ZoneInfo("America/Sao_Paulo")))
+    sold_quantity = Column(Float, nullable=False, default=0)
+    total_value = Column(Float, nullable=False, default=0)
     
     sale_point = relationship("SalePoints", back_populates="retiradas")
     product = relationship("Product", back_populates="retiradas")
