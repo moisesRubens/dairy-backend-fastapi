@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from typing import Optional
 from sales_points.sale_point_dependencies import  validate_token
 from dependecies import make_session
 from orders.order_schema import OrderRequestDTO
@@ -26,4 +27,5 @@ async def destroy(id: int, session = Depends(make_session), user = Depends(valid
 async def delete_all(user = Depends(validate_token), session = Depends(make_session)):
         delete_all_orders_controller(session)
         return {"message": "Orders excluded"}
-        
+
+

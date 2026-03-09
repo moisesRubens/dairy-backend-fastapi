@@ -113,6 +113,28 @@ def delete_all_orders_service(session):
         raise e
     finally:
         session.close()
+        
+def get_orders_by_sale_point_id_service(session, date, sale_point_id):
+    try:
+        result = []
+        query = session.query(Order).join(
+            OrderSalePoint,
+            Order.id == OrderSalePoint.order_id
+        ).filter(
+            OrderSalePoint.sale_point_id == sale_point_id
+        )
+        if date:
+            query = query.filter(func.date(Order.order_date) == date)
+        orders = query.all()
+        for order in orders:
+            result.append(OrderResponse.model_validate(order))
+        return result  
+        
+    except Exception as e:
+        print(f"Erro ao buscar pedidos: {e}")
+        return []
+    finally:
+        session.close()
 
 def validate_item_order_request(item_order_request, product):
     obj = None
