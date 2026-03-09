@@ -1,10 +1,16 @@
 from orders.order_service import create_order_service, get_all_orders_service, delete_order_service, delete_all_orders_service, get_orders_by_sale_point_id_service
 from orders.order_schema import OrderRequestDTO
+from products.ProductExceptions import InsuficientProductsAmountException
+from fastapi import HTTPException
 
 def create_order_controller(order_data: OrderRequestDTO, user, session):
-    order_response_data = create_order_service(order_data, user, session)
-    
-    return order_response_data
+    try:
+        order_response_data = create_order_service(order_data, user, session)
+        return order_response_data
+    except InsuficientProductsAmountException as e:
+        raise HTTPException(409, detail=str(e.message))
+    except Exception as e:
+        raise e
 
 def get_all_orders_controller(session, user, date, description, status):
     return get_all_orders_service(session, user, date, description, status)

@@ -4,6 +4,7 @@ from products.ProductExceptions import ExistingProductException, ProductNotFound
 from sqlalchemy import func
 from fastapi import HTTPException
 from typing import List
+from datetime import date
 
 def get_all_products_service(session):
     result = []
@@ -78,7 +79,6 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
                 })
                 continue
             
-            # Valida e processa a retirada baseado na unidade
             if item.unidade == 'amount':
                 if product.amount < item.quantidade:
                     erros.append({
@@ -116,15 +116,14 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
                 })
                 continue
             
-            # Registra a retirada na tabela de log
-            has_retirada = session.query(RetiradaProduto).filter(RetiradaProduto.product_id == item.product_id, RetiradaProduto.sale_point_id == sale_point_id).first()
+            has_retirada = session.query(RetiradaProduto).filter(RetiradaProduto.product_id == item.product_id, RetiradaProduto.sale_point_id == sale_point_id, func.date(RetiradaProduto.data) == date.today()).first()
             if(has_retirada):
-                has_retirada.quantidade += item.quantidade
+                has_retirada.taken_quantity += item.quantidade
             else:
                 retirada = RetiradaProduto(
                     sale_point_id=sale_point_id,
                     product_id=item.product_id,
-                    quantidade=item.quantidade,
+                    taken_quantity=item.quantidade,
                     unidade=item.unidade,
                     observacao=observacao
                 )
@@ -168,34 +167,26 @@ def subtrair_estoque_service(session, sale_point_id: int, items: List[ItemRetira
     try:
         sucessos = []
         for item in items:
-            # CORRETO - primeiro filtra, depois compara
             retirada = session.query(RetiradaProduto).filter(
                 RetiradaProduto.product_id == item.product_id,
-                RetiradaProduto.sale_point_id == sale_point_id
+                RetiradaProduto.sale_point_id == sale_point_id,
+                date.today() == func.date(RetiradaProduto.data)
             ).first()
             
             if not retirada:
                 sucessos.append({"message": "retirada não encontrada"})
-                continue
-                
-            if item.quantidade == retirada.quantidade:
-                session.query(RetiradaProduto).filter(
-                    RetiradaProduto.product_id == item.product_id,
-                    RetiradaProduto.sale_point_id == sale_point_id
-                ).delete(synchronize_session="fetch")
-            elif item.quantidade < retirada.quantidade:
-                retirada.quantidade = retirada.quantidade - item.quantidade
-            else:
+                return sucessos
+            elif (retirada.taken_quantity - retirada.sold_quantity) < item.quantidade:
                 sucessos.append({"message": "estoque insuficiente"})
-                continue
-                
+                return sucessos
+            
             product = session.get(Product, item.product_id)
             if product.amount is not None:
-                product.amount = product.amount + item.quantidade
+                product.amount += item.quantidade
             elif product.kg is not None:
-                product.kg = product.kg + item.quantidade
+                product.kg += item.quantidade
             elif product.liters is not None:
-                product.liters = product.liters + item.quantidade
+                product.liters += item.quantidade
 
             sucessos.append({
                 "product_id": item.product_id,
@@ -204,8 +195,6 @@ def subtrair_estoque_service(session, sale_point_id: int, items: List[ItemRetira
                 "unidade": item.unidade,
                 "estoque_restante": get_estoque_restante(product, item.unidade)
             })   
-            
-        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         session.commit()
         return sucessos
     except Exception as e:
@@ -250,7 +239,7 @@ def get_all_retiradas_service(session):
             "id": retirada.id,
             "product_id": retirada.product_id,
             "nome": product.name if product else "Produto não encontrado",
-            "quantidade": retirada.quantidade,
+            "quantidade": retirada.taken_quantity,
             "unidade": retirada.unidade,
             "estoque_restante": estoque_restante,  # Agora calculado corretamente
             "data_retirada": retirada.data.isoformat() if retirada.data else None,

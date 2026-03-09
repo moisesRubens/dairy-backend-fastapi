@@ -2,6 +2,7 @@ from model import Order, ItemsOrder, Product, SalePoints, OrderSalePoint, Retira
 from orders.order_schema import OrderResponse, OrderRequestDTO, ItemOrderResponseDTO
 from fastapi import HTTPException
 from products.product_service import validate_product
+from products.ProductExceptions import InsuficientProductsAmountException
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -18,26 +19,26 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
 
     for item in order_data.items:
         retirada = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id==user['sub'], RetiradaProduto.product_id==item.product_id).first()
-        retirada = session.query(RetiradaProduto).filter(RetiradaProduto.product_id == item.product_id, RetiradaProduto.sale_point_id == user['sub']).first()
         obj = validate_item_order_request(item, retirada)
         product = session.get(Product, item.product_id)
         if not validate_product(item.amount, item.kg, item.liters) or not obj:
-            raise HTTPException(404, "invalid inputs")
+            raise HTTPException(404, "invalid h")
         
+        remaining_quantity = retirada.taken_quantity - retirada.sold_quantity
+        if remaining_quantity <= 0:
+            raise InsuficientProductsAmountException()
         if product.amount is not None:
-            print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
-            if retirada.quantidade < item.amount:
+            if item.amount > remaining_quantity:
                 raise HTTPException(409, detail="Insuficiente")    
-            retirada.quantidade -= item.amount
+            retirada.sold_quantity += item.amount
         elif product.kg is not None:
-            if retirada.quantidade < item.kg:
+            if item.kg > remaining_quantity:
                 raise HTTPException(409, detail="Insuficiente")   
-            retirada.quantidade -= item.kg
+            retirada.sold_quantity += item.kg
         elif product.liters is not None:
-            if retirada.quantidade < item.liters:
+            if item.liters > remaining_quantity:
                 raise HTTPException(409, detail="Insuficiente")   
-            retirada.quantidade -= item.liters
-            
+            retirada.sold_quantity += item.liters
         total_value += obj*product.price
         item_order = ItemsOrder(
             order_id=order.id,
@@ -48,12 +49,15 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
             liters=item.liters
         )
         session.add(item_order)
+        retirada.total_value += total_value
+        session.flush()
 
     order.total_value = total_value
     order_sale_point = OrderSalePoint()
     order_sale_point.order_id = order.id
     order_sale_point.sale_point_id = sale_point.id
     session.add(order_sale_point)
+    
     session.commit()
     session.refresh(order)
 
@@ -138,12 +142,21 @@ def get_orders_by_sale_point_id_service(session, date, sale_point_id):
 
 def validate_item_order_request(item_order_request, product):
     obj = None
-    
+    remaining_quantity = product.taken_quantity - product.sold_quantity
     if item_order_request.amount:
-        obj = item_order_request.amount if product.quantidade else None
+        if remaining_quantity:
+            obj = item_order_request.amount
+        else:
+            raise InsuficientProductsAmountException()
     if item_order_request.kg:
-        obj = item_order_request.kg if product.quantidade else None
+        if remaining_quantity:
+            obj = item_order_request.kg
+        else:
+            raise InsuficientProductsAmountException()
     if item_order_request.liters:
-        obj = item_order_request.liters if product.quantidade else None
+        if remaining_quantity:
+             obj = item_order_request.liters
+        else:
+            raise InsuficientProductsAmountException()
     return obj
     
