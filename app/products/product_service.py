@@ -1,7 +1,8 @@
 from model import Product, RetiradaProduto
-from products.product_schema import ProductResponseDTO, ItemRetiradaDTO
+from products.product_schema import ProductResponseDTO, ItemRetiradaDTO, RetiradaResponseDTO, ItemsRetiradaResponseDTO
 from products.ProductExceptions import ExistingProductException, ProductNotFound
-from sqlalchemy import func
+from sqlalchemy import func, desc
+from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 from typing import List
 from datetime import date
@@ -158,9 +159,15 @@ def get_products_by_sale_point_service(sale_point_id, session, user):
     id = sale_point_id if sale_point_id else user['sub']
     retiradas = session.query(RetiradaProduto).filter(
         RetiradaProduto.sale_point_id == id
-    ).order_by(RetiradaProduto.data.desc()).all()
+    ).options(
+        selectinload(RetiradaProduto.product)
+    ).order_by(desc(RetiradaProduto.data)).all()
+    #for retirada in retiradas:
+        #result.append(retirada)
+        
     for retirada in retiradas:
-        result.append(retirada)
+        result.append(ItemsRetiradaResponseDTO.from_orm(retirada))
+        
     return result
 
 def subtrair_estoque_service(session, sale_point_id: int, items: List[ItemRetiradaDTO]):
@@ -187,7 +194,8 @@ def subtrair_estoque_service(session, sale_point_id: int, items: List[ItemRetira
                 product.kg += item.quantidade
             elif product.liters is not None:
                 product.liters += item.quantidade
-
+            if item.quantidade == (retirada.sold_quantity - item.quantidade):
+                retirada.status = True
             sucessos.append({
                 "product_id": item.product_id,
                 "nome": product.name,

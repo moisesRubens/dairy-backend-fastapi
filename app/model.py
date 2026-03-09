@@ -110,6 +110,7 @@ class RetiradaProduto(Base):
     data = Column(DateTime, default=lambda: datetime.now(ZoneInfo("America/Sao_Paulo")))
     sold_quantity = Column(Float, nullable=False, default=0)
     total_value = Column(Float, nullable=False, default=0)
+    status = Column(Boolean, nullable=False, server_default=text('FALSE'))
     
     sale_point = relationship("SalePoints", back_populates="retiradas")
     product = relationship("Product", back_populates="retiradas")
