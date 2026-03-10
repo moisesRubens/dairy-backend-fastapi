@@ -1,4 +1,4 @@
-from orders.order_service import create_order_service, get_all_orders_service, delete_order_service, delete_all_orders_service, get_orders_by_sale_point_id_service, get_order_service
+from orders.order_service import create_order_service, get_all_orders_service, delete_order_service, delete_all_orders_service, get_orders_by_sale_point_id_service, get_order_service, get_all_orders_service_de_pedidos
 from orders.order_schema import OrderRequestDTO
 from products.ProductExceptions import InsuficientProductsAmountException
 from fastapi import HTTPException
@@ -36,3 +36,6 @@ def get_orders_by_sale_point_id_controller(session, date, sale_point_id):
         return get_orders_by_sale_point_id_service(session, date, sale_point_id)
     except Exception as e:
         return e
+    
+def get_all_orders_controller_de_pedidos(session, date, status, descripion):
+    return get_all_orders_service_de_pedidos(session, date, status, descripion)

@@ -146,6 +146,21 @@ def get_order_service(session, user, id):
     order = session.get(Order, id)
     return OrderResponse.model_validate(order)
 
+def get_all_orders_service_de_pedidos(session, date, status, descripion):
+    try:
+        result = []
+        orders = session.query(Order).all()
+        for order in orders:
+            result.append(OrderResponseDTO.model_validate(order))
+        return result
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally: 
+        session.close()
+    return None
+
+
 def validate_item_order_request(item_order_request, product):
     remaining_quantity = product.taken_quantity - product.sold_quantity
     if not remaining_quantity:

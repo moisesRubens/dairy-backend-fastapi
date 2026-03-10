@@ -3,13 +3,13 @@ from typing import Optional
 from sales_points.sale_point_dependencies import  validate_token
 from dependecies import make_session
 from orders.order_schema import OrderRequestDTO
-from orders.order_controller import create_order_controller, get_all_orders_controller, delete_order_controller, delete_all_orders_controller, get_order_controller
+from orders.order_controller import create_order_controller, get_all_orders_controller, delete_order_controller, delete_all_orders_controller, get_order_controller, get_all_orders_controller_de_pedidos
 
 order_router = APIRouter(prefix="/pedidos", tags=["Order"])
 
 @order_router.get("/")
 def index(date=None, description=None, status=None, user = Depends(validate_token), session = Depends(make_session)): 
-    orders = get_all_orders_controller(session, user, date, description, status)
+    orders = get_all_orders_controller_de_pedidos(session, date, description, status)
     return {"orders": orders}
 
 @order_router.get("/{id}")
