@@ -117,16 +117,13 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
         session.close()
 
 
-def get_products_by_sale_point_service(sale_point_id, session, date_param=None, status=False):
+def get_products_by_sale_point_service(sale_point_id, session, date_param, status=False):
     result = []
-    
     query = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id == sale_point_id)
     
     if date_param is not None:
-        query = query.filter(func.date(RetiradaProduto.data) == date_param)
-        
+        query = query.filter(func.date(RetiradaProduto.data) == date_param)  
     retiradas = query.options(selectinload(RetiradaProduto.product)).order_by(desc(RetiradaProduto.data)).all()
-    
     
     if status: 
         return retiradas 
