@@ -14,6 +14,7 @@ def get_all_products_service(session):
         for product in products:
             product_data = ProductResponseDTO.model_validate(product)
             result.append(product_data)
+    print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
     return result
 
 def get_products_service(session, user):

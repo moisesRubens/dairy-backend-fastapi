@@ -7,7 +7,7 @@ class ProductResponseDTO(BaseModel):
     id: int
     name: str
     price: float
-    amount: int | None = None
+    amount: float | None = None
     kg: float | None = None
     liters: float | None = None
 
@@ -35,7 +35,7 @@ class ItemsRetiradaResponseDTO(BaseModel):
     id: int
     sale_point_id: int
     product_id: int
-    name: str  # Preenchido manualmente
+    name: str | None = None  # Preenchido manualmente
     status: bool
     date: datetime = Field(alias="data")
     unit_type: str = Field(alias="unidade")

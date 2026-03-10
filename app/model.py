@@ -84,6 +84,8 @@ class OrderSalePoint(Base):
 
     order_id = Column("order_id", Integer, ForeignKey("orders.id", ondelete='CASCADE'), primary_key=True)
     sale_point_id = Column("sale_point_id", Integer, ForeignKey("sales_points.id", ondelete="CASCADE"), primary_key=True)
+    order_date = Column("order_date", DateTime(timezone=True), default=lambda:datetime.now(tz=ZoneInfo("America/Sao_Paulo"), nullable=True))
+    
     order = relationship(
         "Order",
         back_populates="order_sale_point"

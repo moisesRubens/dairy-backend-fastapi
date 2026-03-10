@@ -10,6 +10,7 @@ product_router = APIRouter(prefix="/produto", tags=["Product"])
 
 @product_router.get("/")
 async def index(user = Depends(validate_token), session = Depends(make_session)):
+    print("kkkkkkkkkkkkkkkkkkkk")
     products = get_all_products_controller(session)
     return {"products": products}
 
