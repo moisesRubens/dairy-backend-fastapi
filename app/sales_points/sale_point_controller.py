@@ -1,12 +1,13 @@
-from sales_points.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service, delete_all_sales_points_service
+from sales_points.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service, delete_all_sales_points_service, create_outbound_service, delete_outbound_service
 from fastapi.security import OAuth2PasswordRequestForm
 from sales_points.sale_point_exceptions import ExistingSalePointException, SalePointNotFound
-from fastapi import HTTPException
+from fastapi import HTTPException, Response, status
 from sales_points.sale_point_schema import SalePointRequestDTO
 from exceptions import ExpiredTokenException
 from datetime import date
 from sqlalchemy.orm import Session
 from products.product_service import get_products_by_sale_point_service
+from products.product_schema import RetirarProdutosRequestDTO
 
 
 async def create_sale_point_controller(name, email, password, session):
@@ -66,3 +67,14 @@ def get_outbounds_controller(id: int, date: date, session: Session):
         return get_products_by_sale_point_service(id, session, date, False)
     except Exception as e:
         raise e
+    
+async def create_outbound_controller(session: Session, id: int, outbound_request: RetirarProdutosRequestDTO):
+    try:
+        return await create_outbound_service(session, id, outbound_request)
+    except SalePointNotFound as e:
+        raise HTTPException(404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(500, "Internal server error")
+    
+async def delete_outbound_controller(session: Session, id: int, product_id: int, date: date):
+    return await delete_outbound_service(session, id, product_id, date)

@@ -10,18 +10,9 @@ product_router = APIRouter(prefix="/produto", tags=["Product"])
 
 @product_router.get("/")
 async def index(user = Depends(validate_token), session = Depends(make_session)):
-    print("kkkkkkkkkkkkkkkkkkkk")
     products = get_all_products_controller(session)
     return {"products": products}
 
-@product_router.post("/retirar")
-async def retirar_produtos(
-    request: RetirarProdutosRequestDTO,
-    user = Depends(validate_token),
-    session = Depends(make_session)
-):
-    result = retirar_produtos_controller(session, user['sub'], request.produtos)
-    return result
 
 @product_router.get("/retiradas")
 async def list_all(sale_point_id: Optional[int] = None, date: Optional[date] = None,  user = Depends(validate_token), session = Depends(make_session)):

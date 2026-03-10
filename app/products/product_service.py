@@ -14,7 +14,6 @@ def get_all_products_service(session):
         for product in products:
             product_data = ProductResponseDTO.model_validate(product)
             result.append(product_data)
-    print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
     return result
 
 def get_products_service(session, user):
@@ -213,5 +212,21 @@ def get_all_retiradas_service(session):
             "observacao": retirada.observacao,
             "sale_point_id": retirada.sale_point_id
         })
+    
+    return result
+
+def get_unit_type_and_quantity_from_product(session, product):
+    result = {"unit_type": None,
+              "quantity": None}
+    
+    if product.amount:
+        result["unit_type"] = "amount"
+        result["quantity"] = product.amount
+    elif product.kg:
+        result["unit_type"] = "kg"
+        result["quantity"] = product.kg
+    elif product.liters:
+        result["unit_type"] = "liters"
+        result["quantity"] = product.liters
     
     return result

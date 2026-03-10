@@ -61,7 +61,6 @@ def get_products_by_sale_point_controller(sale_point_id, date, session: Session,
 
 def get_all_products_controller(session: Session):
     try:
-        print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         products = get_all_products_service(session)
         return products
         

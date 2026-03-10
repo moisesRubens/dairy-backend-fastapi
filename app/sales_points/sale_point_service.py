@@ -1,16 +1,20 @@
 from fastapi import HTTPException, Depends
-from model import SalePoints, Token
+from model import SalePoints, Token, RetiradaProduto, Product
 from sales_points.sale_point_schema import SalePointResponseDTO, SalePointRequestDTO
 from pwdlib import PasswordHash
 from fastapi.security import OAuth2PasswordRequestForm
 from jwt import encode
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from zoneinfo import ZoneInfo
 from decouple import config
 from sales_points.sale_point_exceptions import ExistingSalePointException, SalePointNotFound
 from sales_points.sale_point_dependencies import oauth2_scheme
 from typing import Annotated
+from products.product_schema import RetirarProdutosRequestDTO, ItemsRetiradaResponseDTO
+from products.product_service import get_unit_type_and_quantity_from_product
+from products.ProductExceptions import InsuficientProductsAmountException, ProductNotFound
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 pwd_context = PasswordHash.recommended()
 
@@ -90,6 +94,81 @@ async def delete_sale_point_service(sale_point_request: SalePointRequestDTO, tok
     #await logout_service(token, session)
     return sale_point_response
 
+async def create_outbound_service(session: Session, id: int, outbound_request: RetirarProdutosRequestDTO):
+    try:
+        if not session.get(SalePoints, id):
+            raise SalePointNotFound()
+        result = []
+        
+        for product_outbound in outbound_request.produtos:
+            product = session.get(Product, product_outbound.product_id)
+            
+            if not product:
+                raise ProductNotFound()
+            
+            exists_outbound = session.query(RetiradaProduto).filter(date.today() == func.date(RetiradaProduto.data), RetiradaProduto.sale_point_id == id, RetiradaProduto.product_id == product_outbound.product_id).first()
+            print(exists_outbound)
+            if exists_outbound:
+                continue
+            product_data = get_unit_type_and_quantity_from_product(session, product)
+            if product_outbound.unidade != product_data.get("unit_type"):
+                raise HTTPException(404, "Dados inválidos")
+            if product_outbound.quantidade > product_data.get("quantity"):
+                raise InsuficientProductsAmountException()
+            
+            match product_data.get("unit_type"):
+                case 'amount':
+                    product.amount -= product_outbound.quantidade
+                case 'kg':
+                    product.kg -= product_outbound.quantidade
+                case 'liters':
+                    product.liters -= product_outbound.quantidade
+            
+            outbound = RetiradaProduto(
+                        sale_point_id=id,
+                        product_id=product_outbound.product_id,
+                        taken_quantity=product_outbound.quantidade,
+                        unidade=product_outbound.unidade,
+                        observacao=outbound_request.observacao,
+                        remaining_quantity = product_outbound.quantidade)
+            session.add(outbound)
+            session.flush()
+            result.append(ItemsRetiradaResponseDTO.from_orm(outbound))
+            
+        session.commit()
+        return result 
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally: 
+        session.close()
+        
+async def delete_outbound_service(session: Session, id: int, product_id: int, date: date):
+    try:
+        outbound = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id == id, RetiradaProduto.product_id == product_id, func.date(RetiradaProduto.data)==date).first()
+        
+        if not outbound:
+            raise ProductNotFound()
 
+        product = session.get(Product, product_id)
+        if outbound.status:
+            match outbound.unidade:
+                case 'amount':
+                    product.amount += outbound.remaining_quantity
+                case 'kg':
+                    product.kg += outbound.remaining_quantity
+                case 'liters':
+                    product.liters += outbound.remaining_quantity
+                    
+        outbound_response = ItemsRetiradaResponseDTO.from_orm(outbound)
+        session.delete(outbound)
+        session.commit()
+        return outbound_response
+    except Exception:
+        session.rollback()
+        raise 
+    finally:
+        session.close()
+        
 
 
