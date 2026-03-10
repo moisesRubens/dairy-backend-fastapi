@@ -19,6 +19,7 @@ async def store(name: str, price: float, amount: int = None, kg: float = None, l
     product_data = create_product_controller(name, price, amount, kg, liters,session)
     return {"product created": product_data}
 
+
 @product_router.delete("/{id}")
 async def destroy(id: int, user = Depends(validate_token), session = Depends(make_session)):
     product_data = delete_product_controller(session, id)

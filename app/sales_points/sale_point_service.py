@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Depends
-from model import SalePoints, Token, RetiradaProduto, Product
-from sales_points.sale_point_schema import SalePointResponseDTO, SalePointRequestDTO
+from model import SalePoints, Token, RetiradaProduto, Product, OrderSalePoint, Order
+from sales_points.sale_point_schema import SalePointResponseDTO, SalePointRequestDTO, OrderSalePointResponseDTO
 from pwdlib import PasswordHash
 from fastapi.security import OAuth2PasswordRequestForm
 from jwt import encode
@@ -13,8 +13,9 @@ from typing import Annotated
 from products.product_schema import RetirarProdutosRequestDTO, ItemsRetiradaResponseDTO
 from products.product_service import get_unit_type_and_quantity_from_product
 from products.ProductExceptions import InsuficientProductsAmountException, ProductNotFound
+from orders.order_schema import OrderResponseDTO
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 pwd_context = PasswordHash.recommended()
 
@@ -196,4 +197,25 @@ async def return_outbounds_service(session: Session, id: int):
         session.rollback()
         raise
     finally: 
+        session.close()
+        
+async def delete_orders_service(session: Session, id: int):
+    try:
+        result = []
+        query = session.query(OrderSalePoint).filter(OrderSalePoint.sale_point_id == id)
+        order_sale_point_ralations = query.options(selectinload(OrderSalePoint.order)).all()
+        orders = [osp.order for osp in order_sale_point_ralations]
+            
+        result = OrderSalePointResponseDTO(
+            sale_point_id=id,
+            orders=[OrderResponseDTO.from_orm(order) for order in orders]
+        )
+        for order in orders:
+            session.delete(order)
+        session.commit()
+        return result
+    except Exception:
+        session.rollback()
+        raise
+    finally:
         session.close()

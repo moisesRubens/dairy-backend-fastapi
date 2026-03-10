@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Response, status
 from starlette.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sales_points.sale_point_dependencies import make_session, validate_token, oauth2_scheme
-from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller, delete_all_sales_points_controller, get_outbounds_controller, create_outbound_controller, delete_outbounds_controller, return_outbounds_controller
+from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller, delete_all_sales_points_controller, get_outbounds_controller, create_outbound_controller, delete_outbounds_controller, return_outbounds_controller, delete_orders_controller
 from orders.order_controller import get_orders_by_sale_point_id_controller, create_order_controller
 from orders.order_schema import OrderRequestDTO
 from products.product_schema import RetirarProdutosRequestDTO
@@ -61,6 +61,11 @@ async def get_orders_by_sale_point_id(
 async def store_order(id:int, request_data: OrderRequestDTO, user = Depends(validate_token), session = Depends(make_session)):
     result = create_order_controller(request_data, id, session)
     return result
+
+
+@auth_router.delete("/{id}/order")
+async def delete_orders(id: int, user = Depends(validate_token), session = Depends(make_session)):
+    return await delete_orders_controller(session, id)
 
 
 @auth_router.get("/{id}/outbounds")
