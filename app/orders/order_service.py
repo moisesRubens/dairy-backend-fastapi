@@ -57,7 +57,7 @@ def create_order_service(order_data: OrderRequestDTO, sale_point_id: int, sessio
         order_sale_point.sale_point_id = sale_point.id
         session.add(order_sale_point)
         session.commit()
-        session.refresh(order)
+        session.refresh(order, ['order_sale_point'])
         
         order_response = OrderResponseDTO.model_validate(order)
         return order_response
@@ -94,7 +94,7 @@ def get_all_orders_service(session, user, date=None, description=None, status=No
     orders = query.all()
     result = []
     for order in orders:
-        order_data = OrderResponse.model_validate(order)
+        order_data = OrderResponseDTO.model_validate(order)
         result.append(order_data)
     return result
 

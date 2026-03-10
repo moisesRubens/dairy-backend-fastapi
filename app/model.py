@@ -27,7 +27,7 @@ class Order(Base):
     status = Column("status", Boolean, server_default=text('TRUE'), nullable=False)
     total_value = Column("total_value", Float, nullable=False)
     description = Column("description", String(200), nullable=True)
-    order_date = Column("order_date",  DateTime(timezone=True), default=lambda:datetime.now(tz=ZoneInfo("America/Sao_Paulo")), nullable=False)
+    order_date = Column("order_date",  DateTime(timezone=True), default=lambda:datetime.now(tz=ZoneInfo("America/Sao_Paulo")), nullable=False)  
     item_order = relationship(
         "ItemsOrder",
         back_populates="order",
@@ -42,8 +42,11 @@ class Order(Base):
         passive_deletes=True,
         lazy="selectin"
     )
+    @property
+    def sale_point_id(self):
+        if self.order_sale_point and len(self.order_sale_point) > 0:
+            return self.order_sale_point[0].sale_point_id
     
-
 class Product(Base):
     __tablename__ = "products"
     

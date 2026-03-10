@@ -55,9 +55,11 @@ class OrderResponseDTO(BaseModel):
     total_value: float
     description: str | None = None
     date: datetime = Field(alias='order_date')
+    sale_point_id: int | None
     item_order: List[ItemOrderResponseDTO]
 
     model_config = ConfigDict(
-        from_attributes=True, populate_by_name=True
+        from_attributes=True, 
+        populate_by_name=True
     )
 
