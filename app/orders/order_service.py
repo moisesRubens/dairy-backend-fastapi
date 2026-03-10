@@ -142,6 +142,10 @@ def get_orders_by_sale_point_id_service(session, date, sale_point_id):
         return []
     finally:
         session.close()
+        
+def get_order_service(session, user, id):
+    order = session.get(Order, id)
+    return OrderResponse.model_validate(order)
 
 def validate_item_order_request(item_order_request, product):
     obj = None
