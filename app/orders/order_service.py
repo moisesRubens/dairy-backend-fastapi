@@ -6,7 +6,7 @@ from products.ProductExceptions import InsuficientProductsAmountException
 from datetime import datetime, date
 from zoneinfo import ZoneInfo
 
-def create_order_service(order_data: OrderRequestDTO, user, session):    
+def create_order_service(order_data: OrderRequestDTO, sale_point_id: int, session):    
     try:
         order = Order()
         total_value = 0.0
@@ -16,10 +16,10 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
         session.add(order)
         session.flush()
 
-        sale_point = session.get(SalePoints, user['sub'])
+        sale_point = session.get(SalePoints, sale_point_id)
 
         for item in order_data.items:
-            retirada = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id==user['sub'], RetiradaProduto.product_id==item.product_id,
+            retirada = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id==sale_point_id, RetiradaProduto.product_id==item.product_id,
                                                             date.today() == func.date(RetiradaProduto.data)).first()
             map = validate_item_order_request(item, retirada)
             product = session.get(Product, item.product_id)

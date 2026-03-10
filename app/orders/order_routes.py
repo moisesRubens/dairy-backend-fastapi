@@ -20,7 +20,7 @@ def show(id: int, user = Depends(validate_token), session = Depends(make_session
 
 @order_router.post("/cadastrar")
 async def store(order_data: OrderRequestDTO, user = Depends(validate_token), session = Depends(make_session)):
-        order = create_order_controller(order_data, user, session)
+        order = create_order_controller(order_data, user['sub'], session)
         return {"pedido cadastrado": order}
         
 @order_router.delete("/{id}")

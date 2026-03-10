@@ -3,9 +3,9 @@ from orders.order_schema import OrderRequestDTO
 from products.ProductExceptions import InsuficientProductsAmountException
 from fastapi import HTTPException
 
-def create_order_controller(order_data: OrderRequestDTO, user, session):
+def create_order_controller(order_data: OrderRequestDTO, id: int, session):
     try:
-        order_response_data = create_order_service(order_data, user, session)
+        order_response_data = create_order_service(order_data, id, session)
         return order_response_data
     except InsuficientProductsAmountException as e:
         raise HTTPException(409, detail=str(e.message))
