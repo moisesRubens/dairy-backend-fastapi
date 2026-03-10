@@ -31,14 +31,17 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
             if item.amount > remaining_quantity:
                 raise HTTPException(409, detail="Insuficiente")    
             retirada.sold_quantity += item.amount
+            retirada.remaining_quantity -= item.amount
         elif product.kg is not None:
             if item.kg > remaining_quantity:
                 raise HTTPException(409, detail="Insuficiente")   
             retirada.sold_quantity += item.kg
+            retirada.remaining_quantity -= item.kg
         elif product.liters is not None:
             if item.liters > remaining_quantity:
                 raise HTTPException(409, detail="Insuficiente")   
             retirada.sold_quantity += item.liters
+            retirada.remaining_quantity -= item.liters
         total_value += obj*product.price
         item_order = ItemsOrder(
             order_id=order.id,

@@ -92,11 +92,11 @@ def retirar_produtos_service(session, sale_point_id: int, produtos: list, observ
                 if(retirada):
                     if retirada.status:
                         retirada.taken_quantity += item.quantidade
-                        retirada.remaining_quantity = retirada.taken_quantity
+                        retirada.remaining_quantity = retirada.taken_quantity - retirada.sold_quantity
                     else:
+                        retirada.taken_quantity = item.quantidade if item.quantidade>retirada.taken_quantity else retirada.taken_quantity
+                        retirada.remaining_quantity = item.quantidade
                         retirada.status = True
-                        retirada.taken_quantity = item.quantidade
-                        retirada.remaining_quantity = retirada.taken_quantity
                 else:
                     new_retirada = RetiradaProduto(
                         sale_point_id=sale_point_id,
@@ -177,9 +177,6 @@ def return_products_to_storage_service(session, user, sale_point_id):
         
 
 def get_estoque_restante(product, unidade: str):
-    """
-    Retorna a quantidade restante no estoque para uma determinada unidade
-    """
     if unidade == 'amount':
         return product.amount
     elif unidade == 'kg':
