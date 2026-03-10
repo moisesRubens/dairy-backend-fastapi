@@ -62,6 +62,10 @@ class Product(Base):
         passive_deletes=True
     )
     retiradas = relationship("RetiradaProduto", back_populates="product", cascade="all, delete-orphan")
+    outbound = relationship(
+        "RetiradaProduto",
+        back_populates="product"
+    )
         
 class ItemsOrder(Base):
     __tablename__ = "item_order"
@@ -120,9 +124,13 @@ class RetiradaProduto(Base):
     status = Column(Boolean, nullable=False, server_default=text('TRUE'))
     remaining_quantity = Column(Float, nullable=True, default=0)
     
+    product = relationship(
+        "Product",
+        back_populates="outbound"
+    )
+        
     @property
     def set_remaining_quantity(self, remaining: None) -> float:
         self.remaining_quantity = self.taken_quantity - self.sold_quantity
 
     sale_point = relationship("SalePoints", back_populates="retiradas")
-    product = relationship("Product", back_populates="retiradas")

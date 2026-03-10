@@ -12,4 +12,4 @@ async def edit_outbound(outbound_request: OutboundRequestDTO, user = Depends(val
 
 @outbound_router.patch("/{id}/quantity")
 async def update_quantity(id: int, quantity: int, user = Depends(validate_token), session = Depends(make_session)):
-    return update_quantity_controller(session, id, quantity)
+    return await update_quantity_controller(session, id, quantity)
