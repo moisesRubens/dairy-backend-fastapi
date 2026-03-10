@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from sales_points.auth_routes import auth_router
+from outbounds.outbound_routes import outbound_router
 from orders.order_routes import order_router
 from products.product_routes import product_router
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +9,7 @@ app = FastAPI()
 app.include_router(auth_router)
 app.include_router(order_router)
 app.include_router(product_router)
+app.include_router(outbound_router)
 
 origins = [
     "http://localhost:5173", 
