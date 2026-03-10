@@ -1,7 +1,7 @@
-from sales_points.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service, delete_all_sales_points_service, create_outbound_service, delete_outbound_service
+from sales_points.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service, delete_all_sales_points_service, create_outbound_service, delete_outbounds_service, return_outbounds_service
 from fastapi.security import OAuth2PasswordRequestForm
 from sales_points.sale_point_exceptions import ExistingSalePointException, SalePointNotFound
-from fastapi import HTTPException, Response, status
+from fastapi import HTTPException
 from sales_points.sale_point_schema import SalePointRequestDTO
 from exceptions import ExpiredTokenException
 from datetime import date
@@ -76,5 +76,11 @@ async def create_outbound_controller(session: Session, id: int, outbound_request
     except Exception as e:
         raise HTTPException(500, "Internal server error")
     
-async def delete_outbound_controller(session: Session, id: int, product_id: int, date: date):
-    return await delete_outbound_service(session, id, product_id, date)
+async def delete_outbounds_controller(session: Session, id: int):
+    return await delete_outbounds_service(session, id)
+
+async def return_outbounds_controller(session: Session, id: int):
+    try:
+        return await return_outbounds_service(session, id)
+    except Exception:
+        raise

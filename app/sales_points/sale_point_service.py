@@ -143,15 +143,42 @@ async def create_outbound_service(session: Session, id: int, outbound_request: R
     finally: 
         session.close()
         
-async def delete_outbound_service(session: Session, id: int, product_id: int, date: date):
+async def delete_outbounds_service(session: Session, id: int):
     try:
-        outbound = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id == id, RetiradaProduto.product_id == product_id, func.date(RetiradaProduto.data)==date).first()
+        result = []
+        outbounds = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id == id).all()
         
-        if not outbound:
-            raise ProductNotFound()
+        if not outbounds:
+            return result
 
-        product = session.get(Product, product_id)
-        if outbound.status:
+        for outbound in outbounds:
+            product = session.get(Product, outbound.product_id)
+            if outbound.status:
+                match outbound.unidade:
+                    case 'amount':
+                        product.amount += outbound.remaining_quantity
+                    case 'kg':
+                        product.kg += outbound.remaining_quantity
+                    case 'liters':
+                        product.liters += outbound.remaining_quantity
+            result.append(ItemsRetiradaResponseDTO.from_orm(outbound))
+            session.delete(outbound)
+        
+        session.commit()
+        return result
+    except Exception:
+        session.rollback()
+        raise 
+    finally:
+        session.close()
+        
+async def return_outbounds_service(session: Session, id: int):
+    try:
+        result = []
+        outbounds = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id == id, func.date(RetiradaProduto.data) == date.today(), RetiradaProduto.status == True).all()
+        
+        for outbound in outbounds:
+            product = session.get(Product, outbound.product_id)
             match outbound.unidade:
                 case 'amount':
                     product.amount += outbound.remaining_quantity
@@ -159,16 +186,14 @@ async def delete_outbound_service(session: Session, id: int, product_id: int, da
                     product.kg += outbound.remaining_quantity
                 case 'liters':
                     product.liters += outbound.remaining_quantity
-                    
-        outbound_response = ItemsRetiradaResponseDTO.from_orm(outbound)
-        session.delete(outbound)
-        session.commit()
-        return outbound_response
-    except Exception:
-        session.rollback()
-        raise 
-    finally:
-        session.close()
+            result.append(ItemsRetiradaResponseDTO.from_orm(outbound))
+            outbound.remaining_quantity = 0
+            outbound.status = False
         
-
-
+        session.commit()
+        return result 
+    except Exception: 
+        session.rollback()
+        raise
+    finally: 
+        session.close()

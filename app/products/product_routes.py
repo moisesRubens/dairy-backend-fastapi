@@ -14,19 +14,6 @@ async def index(user = Depends(validate_token), session = Depends(make_session))
     return {"products": products}
 
 
-@product_router.get("/retiradas")
-async def list_all(sale_point_id: Optional[int] = None, date: Optional[date] = None,  user = Depends(validate_token), session = Depends(make_session)):
-    result = get_products_by_sale_point_controller(sale_point_id, date, session, user)
-    return {"retiradas": result}
-
-@product_router.post("/retornar-ao-estoque")
-async def subtrair_estoque(
-    sale_point_id: Optional[int] = None, 
-    user = Depends(validate_token),
-    session = Depends(make_session)
-):
-    return return_products_to_storage_controller(session, user, sale_point_id)
-
 @product_router.post("/cadastrar")
 async def store(name: str, price: float, amount: int = None, kg: float = None, liters: float = None, user = Depends(validate_token), session = Depends(make_session)):
     product_data = create_product_controller(name, price, amount, kg, liters,session)

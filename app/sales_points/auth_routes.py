@@ -4,11 +4,10 @@ from fastapi import APIRouter, Depends, Response, status
 from starlette.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sales_points.sale_point_dependencies import make_session, validate_token, oauth2_scheme
-from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller, delete_all_sales_points_controller, get_outbounds_controller, create_outbound_controller, delete_outbound_controller
+from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller, delete_all_sales_points_controller, get_outbounds_controller, create_outbound_controller, delete_outbounds_controller, return_outbounds_controller
 from orders.order_controller import get_orders_by_sale_point_id_controller, create_order_controller
 from orders.order_schema import OrderRequestDTO
 from products.product_schema import RetirarProdutosRequestDTO
-from products.product_controller import retirar_produtos_controller
 from datetime import date
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -81,9 +80,15 @@ async def create_outbound(
     return result
 
 
-@auth_router.delete("/{id}/outbounds/{outbound_id}")
-async def delete_outbound(id:int, product_id: int, date: Optional[date], user = Depends(validate_token), session = Depends(make_session)):
-    return await delete_outbound_controller(session, id, product_id, date)
+@auth_router.delete("/{id}/outbounds")
+async def delete_outbounds(id:int, user = Depends(validate_token), session = Depends(make_session)):
+    return await delete_outbounds_controller(session, id)
+
+
+@auth_router.patch("/{id}/outbounds")
+async def return_outbounds(id: int, user = Depends(validate_token), session = Depends(make_session)):
+    return await return_outbounds_controller(session, id)
+
 
 @auth_router.post("/login")
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session = Depends(make_session)):
