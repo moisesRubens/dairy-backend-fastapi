@@ -19,7 +19,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('retiradas_produto', sa.Column('status', sa.Boolean, nullable=True, server_default=sa.text('(FALSE)')))
+    op.add_column('retiradas_produto', sa.Column('status', sa.Boolean, nullable=True, server_default=sa.text('(TRUE)')))
+    op.add_column('retiradas_produto', sa.Column('remaining_quantity', sa.Float, nullable=False, server_default='0'))
 
 
 def downgrade() -> None:

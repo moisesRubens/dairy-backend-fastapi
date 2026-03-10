@@ -24,7 +24,7 @@ class Order(Base):
     __tablename__ = "orders"
     
     id = Column("id", Integer, primary_key=True, autoincrement=True)
-    status = Column("status", Boolean, server_default=text('FALSE'), nullable=False)
+    status = Column("status", Boolean, server_default=text('TRUE'), nullable=False)
     total_value = Column("total_value", Float, nullable=False)
     description = Column("description", String(200), nullable=True)
     order_date = Column("order_date",  DateTime(timezone=True), default=lambda:datetime.now(tz=ZoneInfo("America/Sao_Paulo")), nullable=False)
@@ -110,7 +110,12 @@ class RetiradaProduto(Base):
     data = Column(DateTime, default=lambda: datetime.now(ZoneInfo("America/Sao_Paulo")))
     sold_quantity = Column(Float, nullable=False, default=0)
     total_value = Column(Float, nullable=False, default=0)
-    status = Column(Boolean, nullable=False, server_default=text('FALSE'))
+    status = Column(Boolean, nullable=False, server_default=text('TRUE'))
+    remaining_quantity = Column(Float, nullable=True, default=0)
     
+    @property
+    def set_remaining_quantity(self, remaining: None) -> float:
+        self.remaining_quantity = self.taken_quantity - self.sold_quantity
+
     sale_point = relationship("SalePoints", back_populates="retiradas")
     product = relationship("Product", back_populates="retiradas")

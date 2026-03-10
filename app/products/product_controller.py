@@ -1,6 +1,6 @@
-from products.product_service import delete_product_service, create_product_service, get_all_products_service, delete_all_products_service, get_products_by_sale_point_service, retirar_produtos_service, get_products_service, get_all_retiradas_service,subtrair_estoque_service
+from products.product_service import delete_product_service, create_product_service, get_all_products_service, delete_all_products_service, get_products_by_sale_point_service, retirar_produtos_service, get_products_service, get_all_retiradas_service,return_products_to_storage_service
 from fastapi import HTTPException
-from products.ProductExceptions import ExistingProductException, ProductNotFound
+from products.ProductExceptions import ExistingProductException, ProductNotFound, InsuficientProductsAmountException
 from typing import List
 from products.product_schema import ItemRetiradaDTO
 
@@ -43,32 +43,17 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 def retirar_produtos_controller(session: Session, sale_point_id: int, produtos: list, observacao: str = None):
-    """
-    Controlador para retirar produtos do estoque
-    """
     try:
-        # Chama o service para processar a retirada
         resultado = retirar_produtos_service(session, sale_point_id, produtos, observacao)
-        
-        return {
-            "sucesso": True,
-            "mensagem": f"{len(resultado['sucessos'])} produtos retirados com sucesso",
-            "detalhes": resultado
-        }
-        
-    except ValueError as e:
-        # Erros de validação (estoque insuficiente, produto não encontrado)
-        raise HTTPException(status_code=400, detail=str(e))
-        
+        return resultado
     except Exception as e:
-        # Erros inesperados
-        session.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro interno ao processar retirada: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 def get_products_by_sale_point_controller(sale_point_id, session: Session, user):
     try:
-        products = get_products_by_sale_point_service(sale_point_id, session, user)
+        id = sale_point_id if sale_point_id else user['sub']   
+        products = get_products_by_sale_point_service(id, session)
         return products
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar produtos: {str(e)}")
@@ -92,11 +77,14 @@ def get_all_retiradas_controller(session: Session):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar retiradas: {str(e)}")
     
-def subtrair_estoque_controller(session, sale_point_id: int, items: List[ItemRetiradaDTO]):
+def return_products_to_storage_controller(session, user, sale_point_id):
     try:
-        resultado = subtrair_estoque_service(session, sale_point_id, items)
-        return resultado
-        
+        return return_products_to_storage_service(session, user, sale_point_id)
     except Exception as e:
-        session.rollback()
+        do_rollback_session(session)
         raise HTTPException(status_code=500, detail=f"Erro ao subtrair estoque: {str(e)}")
+    
+def do_rollback_session(session):
+    session.open()
+    session.rollback()
+    session.close()

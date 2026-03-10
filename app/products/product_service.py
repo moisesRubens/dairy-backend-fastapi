@@ -1,6 +1,6 @@
 from model import Product, RetiradaProduto
 from products.product_schema import ProductResponseDTO, ItemRetiradaDTO, RetiradaResponseDTO, ItemsRetiradaResponseDTO
-from products.ProductExceptions import ExistingProductException, ProductNotFound
+from products.ProductExceptions import ExistingProductException, ProductNotFound, InsuficientProductsAmountException
 from sqlalchemy import func, desc
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
@@ -66,151 +66,115 @@ def validate_product(amount, kg, liters):
     return  not (kg and amount) or (kg and liters) or (amount and liters)
 
 def retirar_produtos_service(session, sale_point_id: int, produtos: list, observacao: str = None):
-    sucessos = []
-    erros = []
-    
-    for item in produtos:
-        try:
-            product = session.query(Product).filter(Product.id == item.product_id).first()
-            
-            if not product:
-                erros.append({
-                    "product_id": item.product_id,
-                    "erro": "Produto não encontrado"
-                })
-                continue
-            
-            if item.unidade == 'amount':
-                if product.amount < item.quantidade:
-                    erros.append({
-                        "product_id": item.product_id,
-                        "nome": product.name,
-                        "erro": f"Estoque insuficiente: disponível {product.amount} unidades"
-                    })
-                    continue
-                product.amount -= item.quantidade
-                
-            elif item.unidade == 'kg':
-                if product.kg < item.quantidade:
-                    erros.append({
-                        "product_id": item.product_id,
-                        "nome": product.name,
-                        "erro": f"Estoque insuficiente: disponível {product.kg} kg"
-                    })
-                    continue
-                product.kg -= item.quantidade
-                
-            elif item.unidade == 'liters':
-                if product.liters < item.quantidade:
-                    erros.append({
-                        "product_id": item.product_id,
-                        "nome": product.name,
-                        "erro": f"Estoque insuficiente: disponível {product.liters} litros"
-                    })
-                    continue
-                product.liters -= item.quantidade
-            
-            else:
-                erros.append({
-                    "product_id": item.product_id,
-                    "erro": f"Unidade inválida: {item.unidade}"
-                })
-                continue
-            
-            has_retirada = session.query(RetiradaProduto).filter(RetiradaProduto.product_id == item.product_id, RetiradaProduto.sale_point_id == sale_point_id, func.date(RetiradaProduto.data) == date.today()).first()
-            if(has_retirada):
-                has_retirada.taken_quantity += item.quantidade
-            else:
-                retirada = RetiradaProduto(
-                    sale_point_id=sale_point_id,
-                    product_id=item.product_id,
-                    taken_quantity=item.quantidade,
-                    unidade=item.unidade,
-                    observacao=observacao
-                )
-                session.add(retirada)
-            session.commit()
-            sucessos.append({
-                "product_id": item.product_id,
-                "nome": product.name,
-                "quantidade": item.quantidade,
-                "unidade": item.unidade,
-                "estoque_restante": get_estoque_restante(product, item.unidade)
-            })
-            
-        except Exception as e:
-            erros.append({
-                "product_id": item.product_id,
-                "erro": f"Erro inesperado: {str(e)}"
-            })
-    if sucessos:
-        session.commit()
-    
-    return {
-        "sucessos": sucessos,
-        "erros": erros,
-        "total_sucessos": len(sucessos),
-        "total_erros": len(erros)
-    }
-
-
-def get_products_by_sale_point_service(sale_point_id, session, user):
-    result = []
-    id = sale_point_id if sale_point_id else user['sub']
-    retiradas = session.query(RetiradaProduto).filter(
-        RetiradaProduto.sale_point_id == id
-    ).options(
-        selectinload(RetiradaProduto.product)
-    ).order_by(desc(RetiradaProduto.data)).all()
-    #for retirada in retiradas:
-        #result.append(retirada)
-        
-    for retirada in retiradas:
-        result.append(ItemsRetiradaResponseDTO.from_orm(retirada))
-        
-    return result
-
-def subtrair_estoque_service(session, sale_point_id: int, items: List[ItemRetiradaDTO]):
     try:
         sucessos = []
-        for item in items:
-            retirada = session.query(RetiradaProduto).filter(
-                RetiradaProduto.product_id == item.product_id,
-                RetiradaProduto.sale_point_id == sale_point_id,
-                date.today() == func.date(RetiradaProduto.data)
-            ).first()
+        
+        for item in produtos:
+                product = session.query(Product).filter(Product.id == item.product_id).first()
+                
+                if not product:
+                    raise InsuficientProductsAmountException("no product")
+                if item.unidade == 'amount':
+                    if product.amount < item.quantidade:
+                        raise InsuficientProductsAmountException("amount")
+                    product.amount -= item.quantidade
+                elif item.unidade == 'kg':
+                    if product.kg < item.quantidade:
+                        raise InsuficientProductsAmountException("kg")
+                    product.kg -= item.quantidade
+                elif item.unidade == 'liters':
+                    if product.liters < item.quantidade:
+                        raise InsuficientProductsAmountException("liters")
+                    product.liters -= item.quantidade
+                else:
+                    raise HTTPException(404, "invalid inputs")
+                retirada = session.query(RetiradaProduto).filter(RetiradaProduto.product_id == item.product_id, RetiradaProduto.sale_point_id == sale_point_id, func.date(RetiradaProduto.data) == date.today()).first()
+                if(retirada):
+                    if retirada.status:
+                        retirada.taken_quantity += item.quantidade
+                        retirada.remaining_quantity = retirada.taken_quantity
+                    else:
+                        retirada.status = True
+                        retirada.taken_quantity = item.quantidade
+                        retirada.remaining_quantity = retirada.taken_quantity
+                else:
+                    new_retirada = RetiradaProduto(
+                        sale_point_id=sale_point_id,
+                        product_id=item.product_id,
+                        taken_quantity=item.quantidade,
+                        unidade=item.unidade,
+                        observacao=observacao,
+                        remaining_quantity = item.quantidade
+                    )
+                    session.add(new_retirada)
+                    retirada = new_retirada
+                session.commit()
+                sucessos.append(
+                    ItemsRetiradaResponseDTO.from_orm(retirada)
+                )
+        return sucessos
+    finally:
+        session.close()
+
+
+def get_products_by_sale_point_service(sale_point_id, session, date_param=None, status=False):
+    result = []
+    
+    query = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id == sale_point_id)
+    
+    if date_param is not None:
+        query = query.filter(func.date(RetiradaProduto.data) == date_param)
+        
+    retiradas = query.options(selectinload(RetiradaProduto.product)).order_by(desc(RetiradaProduto.data)).all()
+    
+    
+    if status: 
+        return retiradas 
+    else:  
+        for retirada in retiradas:
+            result.append(ItemsRetiradaResponseDTO.from_orm(retirada))
+        return result
+
+def return_products_to_storage_service(session, user, sale_point_id):
+    try:
+        sucessos = []
+        
+        id = sale_point_id if sale_point_id else user['sub']
+        current_date = date.today()  
+        
+        outbounds = get_products_by_sale_point_service(
+            id, 
+            session, 
+            current_date, 
+            True
+        )
+        
+        for outbound in outbounds:
+            product = session.get(Product, outbound.product_id)  
             
-            if not retirada:
-                sucessos.append({"message": "retirada não encontrada"})
-                return sucessos
-            elif (retirada.taken_quantity - retirada.sold_quantity) < item.quantidade:
-                sucessos.append({"message": "estoque insuficiente"})
-                return sucessos
+            if not product:
+                continue
+            remaining_quantity = outbound.remaining_quantity 
             
-            product = session.get(Product, item.product_id)
             if product.amount is not None:
-                product.amount += item.quantidade
-            elif product.kg is not None:
-                product.kg += item.quantidade
-            elif product.liters is not None:
-                product.liters += item.quantidade
-            if item.quantidade == (retirada.sold_quantity - item.quantidade):
-                retirada.status = True
-            sucessos.append({
-                "product_id": item.product_id,
-                "nome": product.name,
-                "quantidade": item.quantidade,
-                "unidade": item.unidade,
-                "estoque_restante": get_estoque_restante(product, item.unidade)
-            })   
+                product.amount += remaining_quantity
+            if product.kg is not None:
+                product.kg += remaining_quantity
+            if product.liters is not None:
+                product.liters += remaining_quantity
+            
+            outbound.status = False
+            outbound.remaining_quantity = 0
+            outbound_response = ItemsRetiradaResponseDTO.from_orm(outbound)
+            sucessos.append(outbound_response)
         session.commit()
         return sucessos
     except Exception as e:
-        print(f"Erro: {e}")
         session.rollback()
-        raise
+        raise e
     finally:
         session.close()
+        
 
 def get_estoque_restante(product, unidade: str):
     """
