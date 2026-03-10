@@ -213,7 +213,7 @@ def get_all_retiradas_service(session):
             "nome": product.name if product else "Produto não encontrado",
             "quantidade": retirada.taken_quantity,
             "unidade": retirada.unidade,
-            "estoque_restante": estoque_restante,  # Agora calculado corretamente
+            "estoque_restante": estoque_restante,  
             "data_retirada": retirada.data.isoformat() if retirada.data else None,
             "observacao": retirada.observacao,
             "sale_point_id": retirada.sale_point_id
