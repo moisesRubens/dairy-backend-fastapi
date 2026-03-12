@@ -50,10 +50,10 @@ def retirar_produtos_controller(session: Session, sale_point_id: int, produtos: 
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def get_products_by_sale_point_controller(sale_point_id, session: Session, user):
+def get_products_by_sale_point_controller(sale_point_id, date, session: Session, user):
     try:
         id = sale_point_id if sale_point_id else user['sub']   
-        products = get_products_by_sale_point_service(id, session)
+        products = get_products_by_sale_point_service(id, session, date, False)
         return products
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar produtos: {str(e)}")

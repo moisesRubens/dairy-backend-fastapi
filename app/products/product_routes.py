@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Optional
 from dependecies import make_session
+from datetime import date
 from products.product_schema import RetirarProdutosRequestDTO, ItemRetiradaDTO, ReturnToStorageRequestDTO, ItemToReturnToStorageDTO
 from sales_points.sale_point_dependencies import validate_token
 from products.product_controller import delete_product_controller, create_product_controller, get_all_products_controller, delete_all_products_controller, retirar_produtos_controller, get_products_by_sale_point_controller, return_products_to_storage_controller
@@ -22,8 +23,8 @@ async def retirar_produtos(
     return result
 
 @product_router.get("/retiradas")
-async def list_all(sale_point_id: Optional[int] = None, user = Depends(validate_token), session = Depends(make_session)):
-    result = get_products_by_sale_point_controller(sale_point_id, session, user)
+async def list_all(sale_point_id: Optional[int] = None, date: Optional[date] = None,  user = Depends(validate_token), session = Depends(make_session)):
+    result = get_products_by_sale_point_controller(sale_point_id, date, session, user)
     return {"retiradas": result}
 
 @product_router.post("/retornar-ao-estoque")
