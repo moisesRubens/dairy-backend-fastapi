@@ -4,3 +4,7 @@ env\
 \env
 .env
 database/dairy_database.db
+app/__pycache__/*
+app/orders/__pycache__/*
+alembic/versions/__pycache__/*
+alembic/__pycache__/*
