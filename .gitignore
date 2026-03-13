@@ -3,5 +3,4 @@ env/
 env\
 \env
 .env
-database/
 database/dairy_database.db

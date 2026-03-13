@@ -77,7 +77,9 @@ class ItemsOrder(Base):
         "Product",
         back_populates="item_order"
     )
-    
+    @property
+    def name(self):
+        return self.product.name
 
 class OrderSalePoint(Base):
     __tablename__ = "order_sale_point"

@@ -1,5 +1,5 @@
 from model import Order, ItemsOrder, Product, SalePoints, OrderSalePoint, RetiradaProduto
-from orders.order_schema import OrderResponse, OrderRequestDTO, ItemOrderResponseDTO
+from orders.order_schema import OrderResponse, OrderRequestDTO, ItemOrderResponseDTO, OrderResponseDTO
 from fastapi import HTTPException
 from products.product_service import validate_product
 from products.ProductExceptions import InsuficientProductsAmountException
@@ -56,12 +56,10 @@ def create_order_service(order_data: OrderRequestDTO, user, session):
         order_sale_point.order_id = order.id
         order_sale_point.sale_point_id = sale_point.id
         session.add(order_sale_point)
-        
         session.commit()
         session.refresh(order)
-
-        order_response = OrderResponse.model_validate(order)
         
+        order_response = OrderResponseDTO.model_validate(order)
         return order_response
     except Exception as e:
         session.rollback()
