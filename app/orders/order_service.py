@@ -3,70 +3,71 @@ from orders.order_schema import OrderResponse, OrderRequestDTO, ItemOrderRespons
 from fastapi import HTTPException
 from products.product_service import validate_product
 from products.ProductExceptions import InsuficientProductsAmountException
-from datetime import datetime
+from datetime import datetime, date
 from zoneinfo import ZoneInfo
 
 def create_order_service(order_data: OrderRequestDTO, user, session):    
-    order = Order()
-    total_value = 0.0
-    order.total_value = total_value
-    order.status = True
-    order.description = order_data.description
-    session.add(order)
-    session.flush()
-
-    sale_point = session.get(SalePoints, user['sub'])
-
-    for item in order_data.items:
-        retirada = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id==user['sub'], RetiradaProduto.product_id==item.product_id).first()
-        obj = validate_item_order_request(item, retirada)
-        product = session.get(Product, item.product_id)
-        if not validate_product(item.amount, item.kg, item.liters) or not obj:
-            raise HTTPException(404, "invalid h")
-        
-        remaining_quantity = retirada.taken_quantity - retirada.sold_quantity
-        if remaining_quantity <= 0:
-            raise InsuficientProductsAmountException()
-        if product.amount is not None:
-            if item.amount > remaining_quantity:
-                raise HTTPException(409, detail="Insuficiente")    
-            retirada.sold_quantity += item.amount
-            retirada.remaining_quantity -= item.amount
-        elif product.kg is not None:
-            if item.kg > remaining_quantity:
-                raise HTTPException(409, detail="Insuficiente")   
-            retirada.sold_quantity += item.kg
-            retirada.remaining_quantity -= item.kg
-        elif product.liters is not None:
-            if item.liters > remaining_quantity:
-                raise HTTPException(409, detail="Insuficiente")   
-            retirada.sold_quantity += item.liters
-            retirada.remaining_quantity -= item.liters
-        total_value += obj*product.price
-        item_order = ItemsOrder(
-            order_id=order.id,
-            product_id=item.product_id,
-            item_price=product.price,
-            amount=item.amount,
-            kg=item.kg,
-            liters=item.liters
-        )
-        session.add(item_order)
-        retirada.total_value += total_value
+    try:
+        order = Order()
+        total_value = 0.0
+        order.total_value = total_value
+        order.status = True
+        order.description = order_data.description
+        session.add(order)
         session.flush()
 
-    order.total_value = total_value
-    order_sale_point = OrderSalePoint()
-    order_sale_point.order_id = order.id
-    order_sale_point.sale_point_id = sale_point.id
-    session.add(order_sale_point)
-    
-    session.commit()
-    session.refresh(order)
+        sale_point = session.get(SalePoints, user['sub'])
 
-    order_response = OrderResponse.model_validate(order)
-    
-    return order_response
+        for item in order_data.items:
+            retirada = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id==user['sub'], RetiradaProduto.product_id==item.product_id,
+                                                            date.today() == func.date(RetiradaProduto.data)).first()
+            map = validate_item_order_request(item, retirada)
+            product = session.get(Product, item.product_id)
+            remaining_quantity = retirada.remaining_quantity
+
+            if remaining_quantity <= 0 or remaining_quantity < map['quantity']:
+                raise InsuficientProductsAmountException()
+            
+            match map['key']:
+                case 'amount':
+                    retirada.sold_quantity += item.amount
+                case 'kg':
+                    retirada.sold_quantity += item.kg
+                case 'liters':
+                    retirada.sold_quantity += item.liters
+            
+            total_value += map['quantity']*product.price
+            retirada.total_value += total_value
+            retirada.remaining_quantity -= map['quantity']
+
+            item_order = ItemsOrder(
+                order_id=order.id,
+                product_id=item.product_id,
+                item_price=product.price,
+                amount=item.amount,
+                kg=item.kg,
+                liters=item.liters
+            )
+            session.add(item_order)
+            session.flush()
+
+        order.total_value = total_value
+        order_sale_point = OrderSalePoint()
+        order_sale_point.order_id = order.id
+        order_sale_point.sale_point_id = sale_point.id
+        session.add(order_sale_point)
+        
+        session.commit()
+        session.refresh(order)
+
+        order_response = OrderResponse.model_validate(order)
+        
+        return order_response
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
 
 
 from sqlalchemy import func
@@ -148,22 +149,22 @@ def get_order_service(session, user, id):
     return OrderResponse.model_validate(order)
 
 def validate_item_order_request(item_order_request, product):
-    obj = None
     remaining_quantity = product.taken_quantity - product.sold_quantity
+    if not remaining_quantity:
+        raise InsuficientProductsAmountException()
+    
+    key = ''
+    obj = 0
     if item_order_request.amount:
-        if remaining_quantity:
-            obj = item_order_request.amount
-        else:
-            raise InsuficientProductsAmountException()
+        obj = item_order_request.amount
+        key = 'amount'
     if item_order_request.kg:
-        if remaining_quantity:
-            obj = item_order_request.kg
-        else:
-            raise InsuficientProductsAmountException()
+        obj = item_order_request.kg
+        key = 'kg'
     if item_order_request.liters:
-        if remaining_quantity:
-             obj = item_order_request.liters
-        else:
-            raise InsuficientProductsAmountException()
-    return obj
+        obj = item_order_request.liters
+        key = 'liters'
+
+    return {"key": key,
+            "quantity": obj}
     
