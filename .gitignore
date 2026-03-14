@@ -8,3 +8,4 @@ app/__pycache__/*
 app/orders/__pycache__/*
 alembic/versions/__pycache__/*
 alembic/__pycache__/*
+app/sales_points/__pycache__/

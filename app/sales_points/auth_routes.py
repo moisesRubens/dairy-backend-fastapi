@@ -3,8 +3,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sales_points.sale_point_dependencies import make_session, validate_token, oauth2_scheme
-from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller, delete_all_sales_points_controller
+from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller, delete_all_sales_points_controller, get_outbounds_controller
 from orders.order_controller import get_orders_by_sale_point_id_controller
+from datetime import date
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -69,3 +70,8 @@ async def destroy(
 async def delete_all(user = Depends(validate_token), session = Depends(make_session)):
     delete_all_sales_points_controller(session)
     return {"message": "Sales points excluded"}
+
+@auth_router.get("/{id}/retiradas")
+async def list_all(id: int, date: Optional[date] = None,  user = Depends(validate_token), session = Depends(make_session)):
+    result = get_outbounds_controller(id, date, session)
+    return {"retiradas": result}

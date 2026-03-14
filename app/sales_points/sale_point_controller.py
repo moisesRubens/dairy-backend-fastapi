@@ -4,6 +4,9 @@ from sales_points.sale_point_exceptions import ExistingSalePointException, SaleP
 from fastapi import HTTPException
 from sales_points.sale_point_schema import SalePointRequestDTO
 from exceptions import ExpiredTokenException
+from datetime import date
+from sqlalchemy.orm import Session
+from products.product_service import get_products_by_sale_point_service
 
 
 async def create_sale_point_controller(name, email, password, session):
@@ -58,3 +61,8 @@ def delete_all_sales_points_controller(session):
     except Exception as e:
         raise HTTPException(500, detail=str(e))
     
+def get_outbounds_controller(id: int, date: date, session: Session):
+    try:
+        return get_products_by_sale_point_service(id, session, date, False)
+    except Exception as e:
+        raise e
