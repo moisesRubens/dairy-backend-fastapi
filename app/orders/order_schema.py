@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, date
 from pydantic import Field, ConfigDict
 from products.product_schema import ProductResponseDTO
 
@@ -37,6 +37,9 @@ class OrderResponse(BaseModel):
 
 class OrderRequestDTO(BaseModel):
     description: Optional[str] = None
+    status: Optional[bool] = None
+    total_value: Optional[float] = None
+    order_date: Optional[date] = None
     items: List[ItemOrderRequestDTO]
 
 

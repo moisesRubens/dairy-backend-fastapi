@@ -3,7 +3,7 @@ from typing import Optional
 from sales_points.sale_point_dependencies import  validate_token
 from dependecies import make_session
 from orders.order_schema import OrderRequestDTO
-from orders.order_controller import create_order_controller, get_all_orders_controller, delete_order_controller, delete_all_orders_controller, get_order_controller, get_all_orders_controller_de_pedidos
+from orders.order_controller import create_order_controller, get_all_orders_controller, delete_order_controller, delete_all_orders_controller, get_order_controller, get_all_orders_controller_de_pedidos, edit_order_controller
 
 order_router = APIRouter(prefix="/pedidos", tags=["Order"])
 
@@ -16,6 +16,11 @@ def index(date=None, description=None, status=None, user = Depends(validate_toke
 def show(id: int, user = Depends(validate_token), session = Depends(make_session)):
         result = get_order_controller(session, user, id)
         return result
+
+
+@order_router.patch("/{id}")
+async def edit(id: int, order_request: OrderRequestDTO, user = Depends(validate_token), session = Depends(make_session)):
+        return await edit_order_controller(session, id, order_request)
 
         
 @order_router.delete("/{id}")

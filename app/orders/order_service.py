@@ -1,10 +1,12 @@
 from model import Order, ItemsOrder, Product, SalePoints, OrderSalePoint, RetiradaProduto
 from orders.order_schema import OrderResponse, OrderRequestDTO, ItemOrderResponseDTO, OrderResponseDTO
+from orders.order_exceptions import OrderNotFound
 from fastapi import HTTPException
 from products.product_service import validate_product
 from products.ProductExceptions import InsuficientProductsAmountException
 from datetime import datetime, date
 from zoneinfo import ZoneInfo
+from sqlalchemy.orm import Session
 
 def create_order_service(order_data: OrderRequestDTO, sale_point_id: int, session):    
     try:
@@ -159,6 +161,41 @@ def get_all_orders_service_de_pedidos(session, date, status, descripion):
     finally: 
         session.close()
     return None
+
+
+def edit_order_service(session: Session, id: int, order_request: OrderRequestDTO):
+    try:
+        order = session.get(Order, id)
+        if not order:
+            raise OrderNotFound()
+        
+        if order_request.status is not None:
+            order.status = order_request.status
+        if order_request.description:
+            order.description = order_request.description
+        if order_request.total_value:
+            order.total_value = order_request.total_value
+        if order_request.order_date:
+            order.order_date = order_request.order_date
+        
+        items_request = order_request.items
+        for item in items_request:
+            item_order = session.query(ItemsOrder).filter(ItemsOrder.product_id == item.product_id, ItemsOrder.order_id == id).first()
+            
+            if item.amount:
+                item_order.amount = item.amount
+            if item.kg:
+                item_order.kg = item.kg
+            if item.liters:
+                item_order.liters = item.liters        
+        
+        session.commit()
+        return OrderResponseDTO.model_validate(order)
+    except Exception:
+        session.rollback()
+        raise
+    finally: 
+        session.close()
 
 
 def validate_item_order_request(item_order_request, product):
