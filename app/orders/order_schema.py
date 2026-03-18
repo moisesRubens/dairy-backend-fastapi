@@ -43,7 +43,6 @@ class OrderRequestDTO(BaseModel):
     items: List[ItemOrderRequestDTO]
 
 
-
 class ItemOrderResponseDTO2(BaseModel):
     prodcut: ProductResponseDTO
     price: float

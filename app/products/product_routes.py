@@ -10,20 +10,20 @@ product_router = APIRouter(prefix="/produto", tags=["Product"])
 
 @product_router.get("/")
 async def index(user = Depends(validate_token), session = Depends(make_session)):
-    products = get_all_products_controller(session)
-    return {"products": products}
+    products = await get_all_products_controller(session)
+    return products
 
 
 @product_router.post("/register")
 async def store(name: str, price: float, amount: int = None, kg: float = None, liters: float = None, user = Depends(validate_token), session = Depends(make_session)):
-    product_data = create_product_controller(name, price, amount, kg, liters,session)
-    return {"product created": product_data}
+    product_data = await create_product_controller(name, price, amount, kg, liters,session)
+    return product_data
 
 
 @product_router.delete("/{id}")
 async def destroy(id: int, user = Depends(validate_token), session = Depends(make_session)):
-    product_data = delete_product_controller(session, id)
-    return {"Produto excluido": product_data}
+    product_data = await delete_product_controller(session, id)
+    return product_data
 
 
 @product_router.get("/{id}")
@@ -40,5 +40,5 @@ async def edit(id: int, product_request: ProductRequestDTO, user = Depends(valid
 
 @product_router.delete("/")
 async def delete_all(user = Depends(validate_token), session = Depends(make_session)):
-    delete_all_products_controller(session)
+    await delete_all_products_controller(session)
     return {"message": "Excluded products"}

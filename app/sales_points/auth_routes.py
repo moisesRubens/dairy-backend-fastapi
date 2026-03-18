@@ -14,25 +14,25 @@ auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @auth_router.get("/")  
 async def index(user = Depends(validate_token), session = (Depends(make_session))):
-    return get_all_sales_points_controller(session)
+    return await get_all_sales_points_controller(session)
 
 
 @auth_router.post("/")  
 async def store(name: str, password: str, email: str = None, session = Depends(make_session)):
     sale_point_data = await create_sale_point_controller(name, email, password, session)
-    return {"sale point": sale_point_data}
+    return sale_point_data
 
 
 @auth_router.delete("/")
 async def delete_all(user = Depends(validate_token), session = Depends(make_session)):
-    delete_all_sales_points_controller(session)
+    await delete_all_sales_points_controller(session)
     return {"message": "Sales points excluded"}
 
 
 @auth_router.get("/{id}")  
 async def show(id: int, user = Depends(validate_token), session = Depends(make_session)):
     sale_point = await get_sale_point(id, session)
-    return {"sale_points": sale_point}
+    return sale_point
 
 
 @auth_router.delete("/{id}") 
@@ -53,13 +53,13 @@ async def get_orders_by_sale_point_id(
     user = Depends(validate_token), 
     session = Depends(make_session)
 ):
-    result = get_orders_by_sale_point_id_controller(session, date, id)
+    result = await get_orders_by_sale_point_id_controller(session, date, id)
     return {"orders": result}
 
 
 @auth_router.post("/{id}/order")
 async def store_order(id:int, request_data: OrderRequestDTO, user = Depends(validate_token), session = Depends(make_session)):
-    result = create_order_controller(request_data, id, session)
+    result = await create_order_controller(request_data, id, session)
     return result
 
 
@@ -70,8 +70,8 @@ async def delete_orders(id: int, user = Depends(validate_token), session = Depen
 
 @auth_router.get("/{id}/outbounds")
 async def get_outbounds(id: int, date: Optional[date] = None,  user = Depends(validate_token), session = Depends(make_session)):
-    result = get_outbounds_controller(id, date, session)
-    return {"retiradas": result}
+    result = await get_outbounds_controller(id, date, session)
+    return result
 
 
 @auth_router.post("/{id}/outbounds")

@@ -20,7 +20,7 @@ async def create_sale_point_controller(name, email, password, session):
 
 async def login_controller(form_data: OAuth2PasswordRequestForm, session):
     try:
-        token = login_service(form_data, session)
+        token = await login_service(form_data, session)
         return token
     except SalePointNotFound as e:
         raise HTTPException(404, detail=str(e))
@@ -34,9 +34,9 @@ async def logout_controller(token, session):
     except ExpiredTokenException as e:
         raise HTTPException(409, detail=str(e))
 
-def get_all_sales_points_controller(session):
+async def get_all_sales_points_controller(session):
     try:
-        sales_points_response = get_all_sales_points_service(session)
+        sales_points_response = await get_all_sales_points_service(session)
         return sales_points_response
     except SalePointNotFound as e:
         raise HTTPException(200, detail=str(e))
@@ -56,15 +56,15 @@ async def delete_sale_point_controller(id: int, token, session):
     except SalePointNotFound as e:
         raise HTTPException(200, detail=str(e))
 
-def delete_all_sales_points_controller(session):
+async def delete_all_sales_points_controller(session):
     try:
-        delete_all_sales_points_service(session)
+        await delete_all_sales_points_service(session)
     except Exception as e:
         raise HTTPException(500, detail=str(e))
     
-def get_outbounds_controller(id: int, date: date, session: Session):
+async def get_outbounds_controller(id: int, date: date, session: Session):
     try:
-        return get_products_by_sale_point_service(id, session, date, False)
+        return await get_products_by_sale_point_service(id, session, date, False)
     except Exception as e:
         raise e
     
