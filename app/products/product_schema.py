@@ -15,6 +15,19 @@ class ProductResponseDTO(BaseModel):
         from_attributes=True,
         populate_by_name=True
     )
+    
+    
+class ProductRequestDTO(BaseModel):
+    name: str | None
+    price: float | None
+    amount: float | None = None
+    kg: float | None = None
+    liters: float | None = None
+
+    model_config = ConfigDict(
+        populate_by_name=True
+    )    
+    
 
 class ItemRetiradaDTO(BaseModel):
     product_id: int

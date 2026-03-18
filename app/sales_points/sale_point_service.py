@@ -108,9 +108,10 @@ async def create_outbound_service(session: Session, id: int, outbound_request: R
                 raise ProductNotFound()
             
             exists_outbound = session.query(RetiradaProduto).filter(date.today() == func.date(RetiradaProduto.data), RetiradaProduto.sale_point_id == id, RetiradaProduto.product_id == product_outbound.product_id).first()
-            print(exists_outbound)
+            
             if exists_outbound:
                 continue
+            
             product_data = get_unit_type_and_quantity_from_product(session, product)
             if product_outbound.unidade != product_data.get("unit_type"):
                 raise HTTPException(404, "Dados inválidos")

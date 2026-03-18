@@ -1,8 +1,8 @@
 from model import Product, RetiradaProduto
-from products.product_schema import ProductResponseDTO, ItemRetiradaDTO, RetiradaResponseDTO, ItemsRetiradaResponseDTO
+from products.product_schema import ProductResponseDTO, ItemRetiradaDTO, RetiradaResponseDTO, ItemsRetiradaResponseDTO, ProductRequestDTO
 from products.ProductExceptions import ExistingProductException, ProductNotFound, InsuficientProductsAmountException
 from sqlalchemy import func, desc
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, Session
 from fastapi import HTTPException
 from typing import List
 from datetime import date
@@ -230,3 +230,42 @@ def get_unit_type_and_quantity_from_product(session, product):
         result["quantity"] = product.liters
     
     return result
+
+def get_product_service(session: Session, id: int):
+    try:
+        product = session.get(Product, id)
+        if product:
+            return ProductResponseDTO.model_validate(product)
+        return []
+    except Exception:
+        session.rollback()
+        raise 
+    finally:
+        session.close()
+        
+
+def edit_product_service(session: Session, id: int, product_request: ProductRequestDTO):
+    try:
+        product = session.get(Product, id)
+        if not product:
+            raise ProductNotFound()
+        
+        if product_request.name:
+            product.name = product_request.name 
+        if product_request.price:
+            product.price = product_request.price 
+        if product_request.amount:
+            product.amount = product_request.amount 
+        if product_request.kg:
+            product.kg = product_request.kg 
+        if product_request.liters:
+            product.liters = product_request.liters 
+            
+        session.commit()
+        return ProductResponseDTO.model_validate(product)
+        
+    except Exception:
+        session.rollback()
+        raise 
+    finally:
+        session.close()
