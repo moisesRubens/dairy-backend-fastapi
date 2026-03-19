@@ -18,17 +18,20 @@ async def get_order_controller(session, user, id):
         result = await get_order_service(session, user, id)
         return result
     except Exception as e:
-        raise e
+        raise HTTPException(400, detail=str(e))
 
 async def get_all_orders_controller(session, user, date, description, status):
     return await get_all_orders_service(session, user, date, description, status)
 
 async def delete_order_controller(id, session):
-    return await delete_order_service(id, session)
+    try:
+        return await delete_order_service(id, session)
+    except Exception as e:
+        raise HTTPException(400, detail=str(e))
 
 async def delete_all_orders_controller(session):
     try:
-        await delete_all_orders_service(session)
+        delete_all_orders_service(session)
     except Exception as e:
         raise HTTPException(500, detail=str(e))
     
@@ -39,8 +42,11 @@ async def get_orders_by_sale_point_id_controller(session, date, sale_point_id):
         return e
     
 async def get_all_orders_controller_de_pedidos(session, date, status, descripion):
-    return await get_all_orders_service_de_pedidos(session, date, status, descripion)
+    return get_all_orders_service_de_pedidos(session, date, status, descripion)
 
 
 async def edit_order_controller(session: Session, id: int, order_request: OrderRequestDTO):
-    return await edit_order_service(session, id, order_request)
+    try:
+        return await edit_order_service(session, id, order_request)
+    except Exception as e:
+        raise HTTPException(400, detail=str(e))

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 async def delete_product_controller(session, id):
     try:
-        product_data = await delete_product_service(session, id)
+        product_data = delete_product_service(session, id)
         return product_data
     except ProductNotFound as e:
         raise HTTPException(404, "Product not found")
@@ -19,13 +19,13 @@ async def delete_product_controller(session, id):
     
 async def delete_all_products_controller(session):
     try: 
-        await delete_all_products_service(session)
+        delete_all_products_service(session)
     except Exception as e:
         raise HTTPException(500, detail=str(e))
     
 async def create_product_controller(name, price, amount, kg, liters, session):
     try:
-        product_data = await create_product_service(name, price, amount, kg, liters, session)
+        product_data = create_product_service(name, price, amount, kg, liters, session)
         return product_data
     except ExistingProductException as e:
         raise HTTPException(409, detail=str(e)) 
@@ -44,11 +44,14 @@ async def get_products_controller(session, user):
         raise e
     
 async def get_product_controller(session: Session, id: int):
-    return await get_product_service(session, id)
+    return get_product_service(session, id)
     
 
 async def edit_product_controller(session: Session, id: int, product_request: ProductRequestDTO):
-    return await edit_product_service(session, id, product_request)
+    try:
+        return edit_product_service(session, id, product_request)
+    except Exception as e:
+        raise HTTPException(400, detail=str(e))
 
 
 async def retirar_produtos_controller(session: Session, sale_point_id: int, produtos: list, observacao: str = None):
@@ -70,7 +73,7 @@ async def get_products_by_sale_point_controller(sale_point_id, date, session: Se
 
 async def get_all_products_controller(session: Session):
     try:
-        products = await get_all_products_service(session)
+        products = get_all_products_service(session)
         return products
         
     except Exception as e:

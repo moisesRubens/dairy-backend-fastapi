@@ -101,14 +101,22 @@ def get_all_orders_service(session, user, date=None, description=None, status=No
     return result
 
 def delete_order_service(id: int, session):
-    order = session.get(Order, id)
-    order_data = OrderResponse.model_validate(order)
-    items = session.query(ItemsOrder).filter(ItemsOrder.order_id==order.id)
-    for item in items:
-        order_data.items.append(ItemOrderResponseDTO.model_validate(item))
-    session.delete(order)
-    session.commit()
-    return order_data
+    try:
+        order = session.get(Order, id)
+        if not order:
+            raise OrderNotFound()
+        order_data = OrderResponse.model_validate(order)
+        items = session.query(ItemsOrder).filter(ItemsOrder.order_id==order.id)
+        for item in items:
+            order_data.items.append(ItemOrderResponseDTO.model_validate(item))
+        session.delete(order)
+        session.commit()
+        return order_data
+    except Exception:
+        session.rollback()
+        raise 
+    finally:
+        session.close()
 
 def delete_all_orders_service(session):
     try:
@@ -146,6 +154,8 @@ def get_orders_by_sale_point_id_service(session, date, sale_point_id):
         
 def get_order_service(session, user, id):
     order = session.get(Order, id)
+    if not order:
+        raise OrderNotFound()
     return OrderResponse.model_validate(order)
 
 def get_all_orders_service_de_pedidos(session, date, status, descripion):
