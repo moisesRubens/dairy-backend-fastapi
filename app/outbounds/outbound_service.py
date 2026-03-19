@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from model import RetiradaProduto, Product
-from outbounds.outbound_schema import OutboundResponseDTO
+from outbounds.outbound_schema import OutboundResponseDTO, OutboundRequestDTO
 from products.ProductExceptions import ProductNotFound, InsuficientProductsAmountException
 from fastapi import HTTPException
 from outbounds.outbound_exceptions import OutboundNotFound
@@ -44,5 +44,34 @@ async def update_quantity_service(session: Session, id: int, quantity: int,):
     except Exception:
         session.rollback()
         raise
+    finally:
+        session.close()
+        
+def edit_outbound_service(session: Session, id: int, outbound_request: OutboundRequestDTO):
+    try:
+        outbound = session.get(RetiradaProduto, id)
+        
+        if outbound_request.name:
+            outbound.name = outbound_request.name
+        if outbound_request.status is not None:
+            outbound.status = outbound_request.status 
+        if outbound_request.date:
+            outbound.data = outbound_request.date
+        if outbound_request.unit_type:
+            outbound.unidade = outbound_request.unit_type
+        if outbound_request.taken_quantity:
+            outbound.sold_quantity = outbound_request.sold_quantity
+        if outbound_request.remaining_quantity:
+            outbound.remaining_quantity = outbound_request.remaining_quantity
+        if outbound_request.total_value_item:
+            outbound.total_value = outbound_request.total_value_item
+        if outbound_request.observation:
+            outbound.observacao = outbound_request.observation
+        
+        session.commit()
+        return OutboundResponseDTO.model_validate(outbound)
+    except Exception:
+        session.rollback()
+        raise 
     finally:
         session.close()
