@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 async def create_order_controller(order_data: OrderRequestDTO, id: int, session):
     try:
-        order_response_data = await create_order_service(order_data, id, session)
+        order_response_data = create_order_service(order_data, id, session)
         return order_response_data
     except InsuficientProductsAmountException as e:
         raise HTTPException(409, detail=str(e.message))
@@ -37,7 +37,7 @@ async def delete_all_orders_controller(session):
     
 async def get_orders_by_sale_point_id_controller(session, date, sale_point_id):
     try:
-        return await get_orders_by_sale_point_id_service(session, date, sale_point_id)
+        return get_orders_by_sale_point_id_service(session, date, sale_point_id)
     except Exception as e:
         return e
     

@@ -12,8 +12,7 @@ def create_order_service(order_data: OrderRequestDTO, sale_point_id: int, sessio
     try:
         order = Order()
         total_value = 0.0
-        order.total_value = total_value
-        order.status = True
+        order.total_value = 0
         order.description = order_data.description
         session.add(order)
         session.flush()
@@ -21,8 +20,7 @@ def create_order_service(order_data: OrderRequestDTO, sale_point_id: int, sessio
         sale_point = session.get(SalePoints, sale_point_id)
 
         for item in order_data.items:
-            retirada = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id==sale_point_id, RetiradaProduto.product_id==item.product_id,
-                                                            date.today() == func.date(RetiradaProduto.data)).first()
+            retirada = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id==sale_point_id, RetiradaProduto.product_id==item.product_id, date.today() == func.date(RetiradaProduto.data)).first()
             map = validate_item_order_request(item, retirada)
             product = session.get(Product, item.product_id)
             remaining_quantity = retirada.remaining_quantity

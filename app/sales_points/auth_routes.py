@@ -54,7 +54,7 @@ async def get_orders_by_sale_point_id(
     session = Depends(make_session)
 ):
     result = await get_orders_by_sale_point_id_controller(session, date, id)
-    return {"orders": result}
+    return result
 
 
 @auth_router.post("/{id}/order")
