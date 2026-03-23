@@ -17,7 +17,7 @@ async def index(user = Depends(validate_token), session = (Depends(make_session)
     return await get_all_sales_points_controller(session)
 
 
-@auth_router.post("/")  
+@auth_router.post("/", status_code=201)  
 async def store(name: str, password: str, email: str = None, session = Depends(make_session)):
     sale_point_data = await create_sale_point_controller(name, email, password, session)
     return sale_point_data
@@ -57,7 +57,7 @@ async def get_orders_by_sale_point_id(
     return result
 
 
-@auth_router.post("/{id}/order")
+@auth_router.post("/{id}/order", status_code=201)
 async def store_order(id:int, request_data: OrderRequestDTO, user = Depends(validate_token), session = Depends(make_session)):
     result = await create_order_controller(request_data, id, session)
     return result
@@ -74,7 +74,7 @@ async def get_outbounds(id: int, date: Optional[date] = None,  user = Depends(va
     return result
 
 
-@auth_router.post("/{id}/outbounds")
+@auth_router.post("/{id}/outbounds", status_code=201)
 async def create_outbound(
     id: int,
     request: RetirarProdutosRequestDTO,
@@ -95,7 +95,7 @@ async def return_outbounds(id: int, user = Depends(validate_token), session = De
     return await return_outbounds_controller(session, id)
 
 
-@auth_router.post("/login")
+@auth_router.post("/login", status_code=201)
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session = Depends(make_session)):
     token = await login_controller(form_data, session)
     return {"access_token": token, "token_type": "bearer"}
@@ -107,5 +107,5 @@ async def logout(
     user_data = Depends(validate_token), 
     session = Depends(make_session)
 ):
-    message = await logout_controller(token, session)
-    return {"message": message}
+    await logout_controller(token, session)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
