@@ -6,10 +6,10 @@ from products.product_schema import ProductRequestDTO
 from sales_points.sale_point_dependencies import validate_token
 from products.product_controller import delete_product_controller, create_product_controller, get_all_products_controller, delete_all_products_controller, retirar_produtos_controller, get_products_by_sale_point_controller, return_products_to_storage_controller, get_product_controller, edit_product_controller
 
-product_router = APIRouter(prefix="/produto", tags=["Product"])
+product_router = APIRouter(prefix="/products", tags=["Product"])
 
 @product_router.get("/")
-async def index(user = Depends(validate_token), session = Depends(make_session)):
+async def index(session = Depends(make_session)):
     products = await get_all_products_controller(session)
     return products
 

@@ -10,9 +10,9 @@ from products.product_service import get_products_by_sale_point_service
 from products.product_schema import RetirarProdutosRequestDTO
 
 
-async def create_sale_point_controller(name, email, password, session):
+async def create_sale_point_controller(sale_point_data: SalePointRequestDTO, session):
     try:
-        sale_point_request = SalePointRequestDTO(name=name, email=email, password=password)
+        sale_point_request = SalePointRequestDTO(name=sale_point_data.name, email=sale_point_data.email, password=sale_point_data.password)
         sale_point_data = await create_sale_point_service(sale_point_request, session)
         return sale_point_data
     except ExistingSalePointException as e:
