@@ -5,7 +5,6 @@ from starlette.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sales_points.sale_point_dependencies import make_session, validate_token, oauth2_scheme
 from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller, delete_all_sales_points_controller, get_outbounds_controller, create_outbound_controller, delete_outbounds_controller, return_outbounds_controller, delete_orders_controller
-from sales_points.sale_point_schema import SalePointRequestDTO
 from orders.order_controller import get_orders_by_sale_point_id_controller, create_order_controller
 from orders.order_schema import OrderRequestDTO
 from products.product_schema import RetirarProdutosRequestDTO
@@ -19,8 +18,8 @@ async def index(user = Depends(validate_token), session = (Depends(make_session)
 
 
 @auth_router.post("/", status_code=201)  
-async def store(sale_point_data: SalePointRequestDTO, session = Depends(make_session)):
-    sale_point_data = await create_sale_point_controller(sale_point_data, session)
+async def store(name: str, password: str, email: str = None, session = Depends(make_session)):
+    sale_point_data = await create_sale_point_controller(name, email, password, session)
     return sale_point_data
 
 
