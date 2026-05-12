@@ -6,7 +6,7 @@ from model import db, Token, SalePoints
 from jwt import decode
 from decouple import config
 from exceptions import ExpiredTokenException
-from dependecies import make_session
+from dependencies import make_session
 from sales_points.sale_point_exceptions import SalePointNotFound
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")

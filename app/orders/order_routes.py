@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Response, status
 from sales_points.sale_point_dependencies import  validate_token
-from dependecies import make_session
+from dependencies import make_session
 from orders.order_schema import OrderRequestDTO
 from orders.order_controller import delete_order_controller, delete_all_orders_controller, get_order_controller, get_all_orders_controller_de_pedidos, edit_order_controller
 

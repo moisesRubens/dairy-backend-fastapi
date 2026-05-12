@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sales_points.sale_point_dependencies import validate_token
-from dependecies import make_session
+from dependencies import make_session
 from outbounds.outbound_schema import OutboundRequestDTO
 from outbounds.outbound_controller import update_quantity_controller, edit_outbound_controller
 

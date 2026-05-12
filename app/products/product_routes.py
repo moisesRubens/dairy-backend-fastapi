@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Response, status
 from typing import List, Optional
-from dependecies import make_session
+from dependencies import make_session
 from datetime import date
 from products.product_schema import ProductRequestDTO
 from sales_points.sale_point_dependencies import validate_token
