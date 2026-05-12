@@ -1,11 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
 env/
-/env
-env\
-\env
 .env
+
+# Database
 database/dairy_database.db
-app/__pycache__/*
-app/orders/__pycache__/*
-alembic/versions/__pycache__/*
-alembic/__pycache__/*
-app/sales_points/__pycache__/
+*.sqlite
+*.sqlite3
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / coverage
+build/
+dist/
+.coverage
+htmlcov/
