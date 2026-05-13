@@ -50,6 +50,8 @@ Documento vivo. Atualize aqui antes de adicionar entidade ou termo novo no códi
 | `observacao` | string | Texto livre |
 | `status` | string ou bool | Conforme caso |
 | `ativo` | bool | Quando faz mais sentido que `is_active` no domínio |
+| `metadata` | JSONB nullable | **Extensão livre** (ADR-0005). Atributos vertical-específicos sem schema rígido. Aparece em `Produto`; pode aparecer em outras entidades por demanda |
+| `tipo` | string | Classificação livre (ADR-0005). Aparece em `Filial` (`loja`, `deposito`, `kiosk`, `franquia`). Não é enum fechado |
 
 ## Termos técnicos que ficam em inglês
 

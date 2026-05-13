@@ -89,14 +89,17 @@ A lista anterior de 11 ADRs vira esta lista mais curta:
 | **ADR-0002** | Roteamento por domínio (paths em pt-BR) | Proposto | — |
 | **ADR-0003** | Filial + Operador + Cliente (separação de responsabilidades) | Proposto | — |
 | **ADR-0004** | Idioma do domínio em pt-BR | Proposto | — |
-| **ADR-0005** | Estoque como ledger (`MovimentoEstoque` + `LocalEstoque`) + Lote/validade | Pendente | ADR-0003, ADR-0004 |
-| **ADR-0006** | `unidade_medida` + `quantidade` (substitui colunas `amount`/`kg`/`liters`) | Pendente | ADR-0005 |
-| **ADR-0007** | Fidelidade: `ContaFidelidade` + `MovimentoFidelidade` | Pendente | ADR-0003 |
-| **ADR-0008** | PDV: `Venda`, `Pagamento`, `Caixa`, `TurnoCaixa` | Pendente | ADR-0005 + ADR-0007 |
-| **ADR-0009** | Fiscal NFC-e (opt-in) | Pendente | ADR-0008 + decisão de negócio |
-| **ADR-0010** | Eventos de domínio (`VendaConcluida`, etc.) — se complexidade pedir | Pendente | ADR-0008 |
+| **ADR-0005** | Pontos de extensão minimais (`Produto.metadata` JSONB + `Filial.tipo`) | Proposto | — |
+| **ADR-0006** | Estoque como ledger (`MovimentoEstoque` + `LocalEstoque`) + Lote/validade | Pendente | ADR-0003, ADR-0004 |
+| **ADR-0007** | `unidade_padrao` + `quantidade` (substitui colunas `amount`/`kg`/`liters`) | Pendente | ADR-0006 |
+| **ADR-0008** | Fidelidade: `ContaFidelidade` + `MovimentoFidelidade` | Pendente | ADR-0003 |
+| **ADR-0009** | PDV: `Venda`, `Pagamento`, `Caixa`, `TurnoCaixa` | Pendente | ADR-0006 + ADR-0008 |
+| **ADR-0010** | Fiscal NFC-e (opt-in) | Pendente | ADR-0009 + decisão de negócio |
+| **ADR-0011** | Eventos de domínio (`VendaConcluida`, etc.) — se complexidade pedir | Pendente | ADR-0009 |
 
-**Ordem natural de implementação:** 0002 + 0003 + 0004 (juntos — todos são fundação) → 0005 → 0006 → 0007 → 0008 → 0009.
+**Ordem natural de implementação:** 0002 + 0003 + 0004 + 0005 (fundação, **single release `v0.2.0`**) → 0006 + 0007 (`v0.3.0`) → 0009 (`v0.4.0`) → 0008 (`v0.5.0`) → 0010/0011 conforme demanda.
+
+> Detalhamento de tasks por sub-fase: [`backlog.md`](backlog.md).
 
 ## 6. O que fica em aberto e quando reabrir
 

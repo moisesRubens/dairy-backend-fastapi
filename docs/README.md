@@ -13,12 +13,14 @@ Backend de um app Flutter de distribuição de laticínios. Esta pasta contém d
 - [`logic/flutter-client-analysis.md`](logic/flutter-client-analysis.md) — análise do repo Flutter do dono: estado real + intenção declarada nos docs `.github/`
 - [`logic/two-repos-workflow.md`](logic/two-repos-workflow.md) — como os dois repos (backend aqui + Flutter lá) coordenam via contrato
 - [`logic/glossario.md`](logic/glossario.md) — **glossário canônico** pt-BR de entidades, colunas, enums e convenções (referência rápida da ADR-0004)
+- [`logic/backlog.md`](logic/backlog.md) — **backlog de desenvolvimento** em 6 fases com tasks ordenadas por dependência
 - [`logic/generic-core-strategy.md`](logic/generic-core-strategy.md) — alternativa rejeitada (núcleo genérico + presets) — mantido como registro
 - [`adr/`](adr/) — Architecture Decision Records (decisões arquiteturais com contexto e consequências)
   - [`0001-record-architecture-decisions.md`](adr/0001-record-architecture-decisions.md) — adoção de ADRs
   - [`0002-domain-driven-routing.md`](adr/0002-domain-driven-routing.md) — reorganizar routers por domínio
   - [`0003-filiais-operadores-clientes.md`](adr/0003-filiais-operadores-clientes.md) — separar SalePoint em Filial + Operador + Cliente
   - [`0004-idioma-ptbr-dominio.md`](adr/0004-idioma-ptbr-dominio.md) — pt-BR como idioma do modelo de domínio
+  - [`0005-pontos-extensao-verticais.md`](adr/0005-pontos-extensao-verticais.md) — `Produto.metadata` JSONB + `Filial.tipo` (porta aberta pra comércios similares sem over-engineering)
 
 ## Como manter
 
