@@ -15,8 +15,8 @@ async def index(user = Depends(validate_token), session = Depends(make_session))
 
 
 @product_router.post("/", status_code=201)
-async def store(name: str, price: float, amount: int = None, kg: float = None, liters: float = None, user = Depends(validate_token), session = Depends(make_session)):
-    product_data = await create_product_controller(name, price, amount, kg, liters,session)
+async def store(producst_list_request: list[ProductRequestDTO], user = Depends(validate_token), session = Depends(make_session)):
+    product_data = await create_product_controller(producst_list_request, session)
     return product_data, 
 
 
