@@ -23,10 +23,9 @@ async def delete_all_products_controller(session):
     except Exception as e:
         raise HTTPException(500, detail=str(e))
     
-async def create_product_controller(name, price, amount, kg, liters, session):
+async def create_product_controller(producst_list_request: list[ProductRequestDTO], session):
     try:
-        product_data = create_product_service(name, price, amount, kg, liters, session)
-        return product_data
+        return create_product_service(producst_list_request, session)
     except ExistingProductException as e:
         raise HTTPException(409, detail=str(e)) 
     
@@ -73,7 +72,7 @@ async def get_products_by_sale_point_controller(sale_point_id, date, session: Se
 
 async def get_all_products_controller(session: Session):
     try:
-        products = get_all_products_service(session)
+        products = await get_all_products_service(session)
         return products
         
     except Exception as e:

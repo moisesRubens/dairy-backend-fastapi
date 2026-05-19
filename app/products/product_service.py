@@ -7,28 +7,19 @@ from fastapi import HTTPException
 from typing import List
 from datetime import date
 
-def get_all_products_service(session):
-    result = []
+async def get_all_products_service(session):
     products = session.query(Product).all()
-    if products:
-        for product in products:
-            product_data = ProductResponseDTO.model_validate(product)
-            result.append(product_data)
-    return result
+    return [ProductResponseDTO.model_validate(product) for product in products]
 
-def get_products_service(session, user):
-    result = []
+async def get_products_service(session, user):
     products = session.query(Product).all()
-    if products:
-        for product in products:
-            product_data = ProductResponseDTO.model_validate(product)
-            result.append(product_data)
-    return result
+    return [ProductResponseDTO.model_validate(product) for product in products]
 
 def delete_product_service(session, id):
     product = session.get(Product, id)
     if not product:
         raise ProductNotFound()
+    
     product_data = ProductResponseDTO.model_validate(product)
     session.delete(product)
     session.commit() 
@@ -41,83 +32,83 @@ def delete_all_products_service(session):
     except Exception as e:
         session.rollback()
         raise e
-    finally:
-        session.close()
 
-
-def create_product_service(name, price, amount, kg, liters, session):
-    if not validate_product:
-        raise HTTPException(404, "Invalid inputs") 
+def create_product_service(producst_list_request: list[ProductRequestDTO], session):
+    products_added = []
     
-    if session.query(Product).filter(func.upper(Product.name) == name.upper()).first():
-        raise ExistingProductException()
-    product = Product()
-    product.name = name
-    product.price = price
-    product.amount = amount
-    product.kg = kg
-    product.liters = liters
-    session.add(product)
+    for data in producst_list_request:
+        if not validate_product(data.amount, data.kg, data.liters):
+            raise HTTPException(400, f"Invalid units for product {data.name}. Select only one: amount, kg or liters.")
+
+        if session.query(Product).filter(func.upper(Product.name) == data.name.upper()).first():
+            raise ExistingProductException()
+
+        product = Product()
+        product.name = data.name
+        product.price = data.price
+        product.amount = data.amount
+        product.kg = data.kg
+        product.liters = data.liters
+        
+        session.add(product)
+        products_added.append(product)
+        
     session.commit()
-    
-    return ProductResponseDTO.model_validate(product)
+    return [ProductResponseDTO.model_validate(p) for p in products_added]
 
 def validate_product(amount, kg, liters):
     return  not (kg and amount) or (kg and liters) or (amount and liters)
 
-def retirar_produtos_service(session, sale_point_id: int, produtos: list, observacao: str = None):
-    try:
-        sucessos = []
-        
-        for item in produtos:
-                product = session.query(Product).filter(Product.id == item.product_id).first()
-                
-                if not product:
-                    raise InsuficientProductsAmountException("no product")
-                if item.unidade == 'amount':
-                    if product.amount < item.quantidade:
-                        raise InsuficientProductsAmountException("amount")
-                    product.amount -= item.quantidade
-                elif item.unidade == 'kg':
-                    if product.kg < item.quantidade:
-                        raise InsuficientProductsAmountException("kg")
-                    product.kg -= item.quantidade
-                elif item.unidade == 'liters':
-                    if product.liters < item.quantidade:
-                        raise InsuficientProductsAmountException("liters")
-                    product.liters -= item.quantidade
+async def retirar_produtos_service(session, sale_point_id: int, produtos: List[ItemRetiradaDTO], observacao: str = None):
+    sucessos = []
+    
+    for item in produtos:
+            product = session.query(Product).filter(Product.id == item.product_id).first()
+            
+            if not product:
+                raise InsuficientProductsAmountException("no product")
+            if item.unidade == 'amount':
+                if product.amount < item.quantidade:
+                    raise InsuficientProductsAmountException("amount")
+                product.amount -= item.quantidade
+            elif item.unidade == 'kg':
+                if product.kg < item.quantidade:
+                    raise InsuficientProductsAmountException("kg")
+                product.kg -= item.quantidade
+            elif item.unidade == 'liters':
+                if product.liters < item.quantidade:
+                    raise InsuficientProductsAmountException("liters")
+                product.liters -= item.quantidade
+            else:
+                raise HTTPException(404, "invalid inputs")
+            retirada = session.query(RetiradaProduto).filter(RetiradaProduto.product_id == item.product_id, RetiradaProduto.sale_point_id == sale_point_id, func.date(RetiradaProduto.data) == date.today()).first()
+            if(retirada):
+                if retirada.status:
+                    retirada.taken_quantity += item.quantidade
+                    retirada.remaining_quantity = retirada.taken_quantity - retirada.sold_quantity
                 else:
-                    raise HTTPException(404, "invalid inputs")
-                retirada = session.query(RetiradaProduto).filter(RetiradaProduto.product_id == item.product_id, RetiradaProduto.sale_point_id == sale_point_id, func.date(RetiradaProduto.data) == date.today()).first()
-                if(retirada):
-                    if retirada.status:
-                        retirada.taken_quantity += item.quantidade
-                        retirada.remaining_quantity = retirada.taken_quantity - retirada.sold_quantity
-                    else:
-                        retirada.taken_quantity = item.quantidade if item.quantidade>retirada.taken_quantity else retirada.taken_quantity
-                        retirada.remaining_quantity = item.quantidade
-                        retirada.status = True
-                else:
-                    new_retirada = RetiradaProduto(
-                        sale_point_id=sale_point_id,
-                        product_id=item.product_id,
-                        taken_quantity=item.quantidade,
-                        unidade=item.unidade,
-                        observacao=observacao,
-                        remaining_quantity = item.quantidade
-                    )
-                    session.add(new_retirada)
-                    retirada = new_retirada
-                session.commit()
-                sucessos.append(
-                    ItemsRetiradaResponseDTO.from_orm(retirada)
+                    retirada.taken_quantity = item.quantidade if item.quantidade>retirada.taken_quantity else retirada.taken_quantity
+                    retirada.remaining_quantity = item.quantidade
+                    retirada.status = True
+            else:
+                new_retirada = RetiradaProduto(
+                    sale_point_id=sale_point_id,
+                    product_id=item.product_id,
+                    taken_quantity=item.quantidade,
+                    unidade=item.unidade,
+                    observacao=observacao,
+                    remaining_quantity = item.quantidade
                 )
-        return sucessos
-    finally:
-        session.close()
+                session.add(new_retirada)
+                retirada = new_retirada
+            
+            session.flush() # Garante que o ID e campos do banco existam antes de criar o DTO
+            sucessos.append(ItemsRetiradaResponseDTO.from_orm(retirada))
+            
+    session.commit()
+    return sucessos
 
-
-def get_products_by_sale_point_service(sale_point_id, session, date_param, status=False):
+async def get_products_by_sale_point_service(sale_point_id, session, date_param, status=False):
     result = []
     query = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id == sale_point_id)
     
@@ -132,14 +123,14 @@ def get_products_by_sale_point_service(sale_point_id, session, date_param, statu
             result.append(ItemsRetiradaResponseDTO.from_orm(retirada))
         return result
 
-def return_products_to_storage_service(session, user, sale_point_id):
+async def return_products_to_storage_service(session, user, sale_point_id):
     try:
         sucessos = []
         
         id = sale_point_id if sale_point_id else user['sub']
         current_date = date.today()  
         
-        outbounds = get_products_by_sale_point_service(
+        outbounds = await get_products_by_sale_point_service(
             id, 
             session, 
             current_date, 
@@ -169,8 +160,6 @@ def return_products_to_storage_service(session, user, sale_point_id):
     except Exception as e:
         session.rollback()
         raise e
-    finally:
-        session.close()
         
 
 def get_estoque_restante(product, unidade: str):
@@ -182,7 +171,7 @@ def get_estoque_restante(product, unidade: str):
         return product.liters
     return 0
 
-def get_all_retiradas_service(session):
+async def get_all_retiradas_service(session):
     retiradas = session.query(RetiradaProduto).order_by(
         RetiradaProduto.data.desc()
     ).all()
@@ -236,12 +225,10 @@ def get_product_service(session: Session, id: int):
         product = session.get(Product, id)
         if product:
             return ProductResponseDTO.model_validate(product)
-        return []
+        raise ProductNotFound()
     except Exception:
         session.rollback()
         raise 
-    finally:
-        session.close()
         
 
 def edit_product_service(session: Session, id: int, product_request: ProductRequestDTO):
@@ -267,5 +254,3 @@ def edit_product_service(session: Session, id: int, product_request: ProductRequ
     except Exception:
         session.rollback()
         raise 
-    finally:
-        session.close()
