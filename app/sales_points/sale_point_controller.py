@@ -64,7 +64,7 @@ async def delete_all_sales_points_controller(session):
     
 async def get_outbounds_controller(id: int, date: date, session: Session):
     try:
-        return get_products_by_sale_point_service(id, session, date, False)
+        return await get_products_by_sale_point_service(id, session, date, False)
     except Exception as e:
         raise e
     
