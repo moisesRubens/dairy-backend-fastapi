@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
+from products.product_schema import ProductResponseDTO
 
 class OutboundRequestDTO(BaseModel):
     name: str | None = None  
@@ -33,3 +34,9 @@ class OutboundResponseDTO(BaseModel):
         from_attributes=True,
         populate_by_name=True
     )
+    
+class OutboundResponseDTOTest(BaseModel):
+    id: int
+    observation: Optional[str]  = Field(default=None, alias="observacao")
+    date: Optional[datetime] = Field(default=None, alias="data")
+    products: list[ProductResponseDTO]
