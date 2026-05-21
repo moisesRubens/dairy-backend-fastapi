@@ -10,12 +10,14 @@ from decouple import config
 from sales_points.sale_point_exceptions import ExistingSalePointException, SalePointNotFound
 from sales_points.sale_point_dependencies import oauth2_scheme
 from typing import Annotated
-from products.product_schema import RetirarProdutosRequestDTO, ItemsRetiradaResponseDTO
+from products.product_schema import RetirarProdutosRequestDTO, ItemsRetiradaResponseDTO, ProductResponseDTO
 from products.product_service import get_unit_type_and_quantity_from_product
 from products.ProductExceptions import InsuficientProductsAmountException, ProductNotFound
 from orders.order_schema import OrderResponseDTO
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
+from outbounds.outbound_schema import OutboundResponseDTOTest
+
 
 pwd_context = PasswordHash.recommended()
 
@@ -97,26 +99,42 @@ async def delete_sale_point_service(sale_point_request: SalePointRequestDTO, tok
 
 async def create_outbound_service(session: Session, id: int, outbound_request: RetirarProdutosRequestDTO):
     try:
+        outobund_products = []
+        
         if not session.get(SalePoints, id):
             raise SalePointNotFound()
-        result = []
-        
+              
         for product_outbound in outbound_request.produtos:
             product = session.get(Product, product_outbound.product_id)
             
             if not product:
                 raise ProductNotFound()
             
-            exists_outbound = session.query(RetiradaProduto).filter(date.today() == func.date(RetiradaProduto.data), RetiradaProduto.sale_point_id == id, RetiradaProduto.product_id == product_outbound.product_id).first()
-            
-            if exists_outbound:
-                continue
-            
             product_data = get_unit_type_and_quantity_from_product(session, product)
             if product_outbound.unidade != product_data.get("unit_type"):
                 raise HTTPException(404, "Dados inválidos")
             if product_outbound.quantidade > product_data.get("quantity"):
                 raise InsuficientProductsAmountException()
+            
+            exists_outbound = session.query(RetiradaProduto).filter(date.today() == func.date(RetiradaProduto.data), RetiradaProduto.sale_point_id == id, RetiradaProduto.product_id == product_outbound.product_id).first()
+            
+            outbound = None
+            if exists_outbound:
+                exists_outbound.taken_quantity += product_outbound.quantidade
+                exists_outbound.remaining_quantity += product_outbound.quantidade
+                outbound = exists_outbound
+            else:
+                new_outbound = RetiradaProduto(
+                        sale_point_id=id,
+                        product_id=product_outbound.product_id,
+                        taken_quantity=product_outbound.quantidade,
+                        unidade=product_outbound.unidade,
+                        observacao=outbound_request.observacao,
+                        remaining_quantity = product_outbound.quantidade)
+                session.add(new_outbound)
+                session.flush()
+                outbound = new_outbound
+    
             
             match product_data.get("unit_type"):
                 case 'amount':
@@ -125,19 +143,24 @@ async def create_outbound_service(session: Session, id: int, outbound_request: R
                     product.kg -= product_outbound.quantidade
                 case 'liters':
                     product.liters -= product_outbound.quantidade
-            
-            outbound = RetiradaProduto(
-                        sale_point_id=id,
-                        product_id=product_outbound.product_id,
-                        taken_quantity=product_outbound.quantidade,
-                        unidade=product_outbound.unidade,
-                        observacao=outbound_request.observacao,
-                        remaining_quantity = product_outbound.quantidade)
-            session.add(outbound)
-            session.flush()
-            result.append(ItemsRetiradaResponseDTO.from_orm(outbound))
-            
+                    
+            product_dto = ProductResponseDTO(
+                id=product.id,
+                name=product.name,
+                price=product.price, 
+                amount=product_outbound.quantidade if product_data.get("unit_type") == 'amount' else None,
+                kg=product_outbound.quantidade if product_data.get("unit_type") == 'kg' else None,
+                liters=product_outbound.quantidade if product_data.get("unit_type") == 'liters' else None
+            )
+            outobund_products.append(product_dto)  
         session.commit()
+        
+        result = OutboundResponseDTOTest(
+            id=outbound.id,
+            observacao=outbound.observacao,
+            data=datetime.now(),
+            products=outobund_products
+        )
         return result 
     except Exception as e:
         session.rollback()
