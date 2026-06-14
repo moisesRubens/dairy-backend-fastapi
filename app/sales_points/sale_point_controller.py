@@ -1,4 +1,4 @@
-from sales_points.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service, delete_all_sales_points_service, create_outbound_service, delete_outbounds_service, return_outbounds_service, delete_orders_service
+from sales_points.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service, delete_all_sales_points_service, create_outbound_service, delete_outbounds_service, return_outbounds_service, delete_orders_service, admin_exists, create_admin_service
 from fastapi.security import OAuth2PasswordRequestForm
 from sales_points.sale_point_exceptions import ExistingSalePointException, SalePointNotFound
 from fastapi import HTTPException
@@ -15,6 +15,18 @@ async def create_sale_point_controller(name, email, password, session):
         sale_point_request = SalePointRequestDTO(name=name, email=email, password=password)
         sale_point_data = await create_sale_point_service(sale_point_request, session)
         return sale_point_data
+    except ExistingSalePointException as e:
+        raise HTTPException(409, detail=str(e))
+
+
+async def bootstrap_admin_controller(name, email, password, session):
+    # Bootstrap só é permitido enquanto NÃO existir nenhum admin. Depois disso,
+    # novas contas admin devem ser criadas por outro admin (rota protegida).
+    if admin_exists(session):
+        raise HTTPException(403, detail="Bootstrap indisponível: já existe um administrador")
+    try:
+        sale_point_request = SalePointRequestDTO(name=name, email=email, password=password)
+        return await create_admin_service(sale_point_request, session)
     except ExistingSalePointException as e:
         raise HTTPException(409, detail=str(e))
 

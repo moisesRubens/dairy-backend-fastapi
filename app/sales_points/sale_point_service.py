@@ -35,6 +35,30 @@ async def create_sale_point_service(sale_point_request: SalePointRequestDTO, ses
     session.commit()
     return sale_point_response
 
+
+def admin_exists(session) -> bool:
+    """True se já existe pelo menos uma conta com papel admin."""
+    return session.query(SalePoints).filter(SalePoints.role == "admin").count() > 0
+
+
+async def create_admin_service(sale_point_request: SalePointRequestDTO, session):
+    """Cria uma conta com papel 'admin'. Usado apenas pelo bootstrap inicial."""
+    existing = session.query(SalePoints).filter(func.upper(SalePoints.name) == sale_point_request.name.upper()).first()
+    if existing:
+        raise ExistingSalePointException()
+
+    sale_point = SalePoints()
+    sale_point.password = pwd_context.hash(sale_point_request.password)
+    sale_point.name = sale_point_request.name
+    sale_point.email = sale_point_request.email
+    sale_point.role = "admin"
+    session.add(sale_point)
+    session.flush()
+    sale_point_response = SalePointResponseDTO.model_validate(sale_point)
+    session.commit()
+    return sale_point_response
+
+
 def login_service(form_data: OAuth2PasswordRequestForm, session):
     SECRET_KEY = config('SECRET_KEY')
     EXPIRE_TOKEN = int(config('EXPIRE_TIME_TOKEN'))

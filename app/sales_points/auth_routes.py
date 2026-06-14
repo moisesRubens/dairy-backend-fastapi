@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Response, status
 from starlette.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sales_points.sale_point_dependencies import make_session, validate_token, oauth2_scheme, require_admin, require_self_or_admin
-from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller, delete_all_sales_points_controller, get_outbounds_controller, create_outbound_controller, delete_outbounds_controller, return_outbounds_controller, delete_orders_controller
+from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller, delete_all_sales_points_controller, get_outbounds_controller, create_outbound_controller, delete_outbounds_controller, return_outbounds_controller, delete_orders_controller, bootstrap_admin_controller
 from orders.order_controller import get_orders_by_sale_point_id_controller, create_order_controller
 from orders.order_schema import OrderRequestDTO
 from products.product_schema import RetirarProdutosRequestDTO
@@ -18,10 +18,18 @@ async def index(user = Depends(require_admin), session = (Depends(make_session))
     return await get_all_sales_points_controller(session)
 
 
-@auth_router.post("/", status_code=201)  
-async def store(name: str, password: str, email: str = None, session = Depends(make_session)):
+@auth_router.post("/", status_code=201)
+async def store(name: str, password: str, email: str = None, user = Depends(require_admin), session = Depends(make_session)):
+    # P0: cadastro deixou de ser aberto. Apenas um admin cria novos vendedores.
     sale_point_data = await create_sale_point_controller(name, email, password, session)
     return sale_point_data
+
+
+@auth_router.post("/bootstrap-admin", status_code=201)
+async def bootstrap_admin(name: str, password: str, email: str = None, session = Depends(make_session)):
+    # Cria o PRIMEIRO administrador. Fica disponível apenas enquanto não houver
+    # nenhum admin; depois retorna 403. É como o sistema sai do zero com segurança.
+    return await bootstrap_admin_controller(name, email, password, session)
 
 
 @auth_router.delete("/")
