@@ -21,6 +21,10 @@ def create_order_service(order_data: OrderRequestDTO, sale_point_id: int, sessio
 
         for item in order_data.items:
             retirada = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id==sale_point_id, RetiradaProduto.product_id==item.product_id, date.today() == func.date(RetiradaProduto.data)).first()
+            # Sem retirada do dia para esse produto/ponto -> 409 limpo (antes
+            # dava 500 ao desreferenciar None em validate_item_order_request).
+            if not retirada:
+                raise InsuficientProductsAmountException()
             map = validate_item_order_request(item, retirada)
             product = session.get(Product, item.product_id)
             remaining_quantity = retirada.remaining_quantity
