@@ -45,7 +45,7 @@ def login_service(form_data: OAuth2PasswordRequestForm, session):
         raise SalePointNotFound()
     if not pwd_context.verify(form_data.password, sale_point.password):
         raise HTTPException(401, "invalid credentials")
-    payload = {"sub": str(sale_point.id)}
+    payload = {"sub": str(sale_point.id), "role": sale_point.role}
     expire = datetime.now(tz=ZoneInfo("America/Sao_Paulo")) + timedelta(minutes=EXPIRE_TOKEN)
     payload.update({'exp': expire})
     token = encode(payload, SECRET_KEY, algorithm=ALGORITHM)

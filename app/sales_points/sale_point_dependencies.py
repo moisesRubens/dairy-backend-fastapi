@@ -23,7 +23,13 @@ async def validate_token(token: Annotated[str, Depends(oauth2_scheme)], session 
             raise SalePointNotFound()
         if session.get(Token, token):
             raise ExpiredTokenException('Token expired')
-        
+
+        # Papel autoritativo vem do banco, não do token (defesa contra token
+        # defasado se o papel da conta mudou após a emissão). Normaliza também
+        # o id como inteiro para as checagens de permissão downstream.
+        user_data["role"] = sale_point.role
+        user_data["sale_point_id"] = sale_point.id
+
         return user_data
     except ExpiredTokenException as e:
         raise HTTPException(401, detail=str(e))
