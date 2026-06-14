@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Response, status
 from starlette.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from sales_points.sale_point_dependencies import make_session, validate_token, oauth2_scheme
+from sales_points.sale_point_dependencies import make_session, validate_token, oauth2_scheme, require_admin
 from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller, delete_all_sales_points_controller, get_outbounds_controller, create_outbound_controller, delete_outbounds_controller, return_outbounds_controller, delete_orders_controller
 from orders.order_controller import get_orders_by_sale_point_id_controller, create_order_controller
 from orders.order_schema import OrderRequestDTO
@@ -12,8 +12,9 @@ from datetime import date
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
-@auth_router.get("/")  
-async def index(user = Depends(validate_token), session = (Depends(make_session))):
+@auth_router.get("/")
+async def index(user = Depends(require_admin), session = (Depends(make_session))):
+    # Listar todos os pontos de venda é operação de administrador.
     return await get_all_sales_points_controller(session)
 
 
@@ -24,7 +25,8 @@ async def store(name: str, password: str, email: str = None, session = Depends(m
 
 
 @auth_router.delete("/")
-async def delete_all(user = Depends(validate_token), session = Depends(make_session)):
+async def delete_all(user = Depends(require_admin), session = Depends(make_session)):
+    # P0: antes qualquer vendedor logado apagava TODOS os pontos. Só admin.
     await delete_all_sales_points_controller(session)
     return {"message": "Sales points excluded"}
 
@@ -37,9 +39,9 @@ async def show(id: int, user = Depends(validate_token), session = Depends(make_s
 
 @auth_router.delete("/{id}") 
 async def destroy(
-    id: int, 
-    token: Annotated[str, Depends(oauth2_scheme)], 
-    user = Depends(validate_token), 
+    id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user = Depends(require_admin),
     session = Depends(make_session)
 ):
     sale_point_response = await delete_sale_point_controller(id, token, session)
