@@ -13,6 +13,9 @@ class SalePoints(Base):
     name = Column("name", String(100))
     email = Column("email", String(200), nullable=True, unique=False)
     password = Column("password", String(200))
+    # Papel de acesso: "admin" (dono da fazenda) ou "vendedor" (ponto de venda).
+    # Default "vendedor" para preservar o comportamento das contas existentes.
+    role = Column("role", String(20), nullable=False, server_default=text("'vendedor'"))
     order_sale_point = relationship(
         "OrderSalePoint",
         cascade="all, delete-orphan",
