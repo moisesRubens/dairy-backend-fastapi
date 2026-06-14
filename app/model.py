@@ -137,3 +137,28 @@ class RetiradaProduto(Base):
         self.remaining_quantity = self.taken_quantity - self.sold_quantity
 
     sale_point = relationship("SalePoints", back_populates="retiradas")
+
+
+class StockRequest(Base):
+    """Solicitação de reposição de estoque feita por um vendedor.
+
+    Fluxo: vendedor cria (PENDING) -> admin aprova (APPROVED, aplica o estoque
+    ao ponto e gera a retirada) ou recusa (REJECTED, com motivo). O vendedor
+    pode cancelar a própria solicitação ainda pendente (CANCELLED).
+    """
+    __tablename__ = "stock_requests"
+
+    id = Column("id", Integer, primary_key=True, autoincrement=True)
+    requested_by_id = Column(Integer, ForeignKey("sales_points.id", ondelete="SET NULL"), nullable=True)
+    target_point_id = Column(Integer, ForeignKey("sales_points.id", ondelete="CASCADE"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
+    quantity = Column(Float, nullable=False)
+    unidade = Column(String(10), nullable=False)  # amount | kg | liters
+    status = Column(String(10), nullable=False, server_default=text("'PENDING'"))  # PENDING|APPROVED|REJECTED|CANCELLED
+    reason = Column(String(255), nullable=True)  # motivo da recusa / observação do admin
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(tz=ZoneInfo("America/Sao_Paulo")))
+    decided_at = Column(DateTime(timezone=True), nullable=True)
+    decided_by_id = Column(Integer, ForeignKey("sales_points.id", ondelete="SET NULL"), nullable=True)
+    applied_outbound_id = Column(Integer, ForeignKey("retiradas_produto.id", ondelete="SET NULL"), nullable=True)
+
+    product = relationship("Product")
