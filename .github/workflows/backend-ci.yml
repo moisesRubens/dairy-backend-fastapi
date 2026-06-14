@@ -1,0 +1,36 @@
+name: Backend CI
+
+# Valida, a cada push na main e em todo PR, que as dependências instalam,
+# as migrações Alembic rodam do zero e a aplicação importa sem erros.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    name: Install, Migrate & Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configura Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Instala dependências
+        run: pip install -r requirements.txt
+
+      - name: Prepara .env e pasta do banco
+        run: |
+          mkdir -p database
+          printf 'SECRET_KEY=ci-secret-not-for-prod\nEXPIRE_TIME_TOKEN=120\nALGORITHM=HS256\nDATABASE_URL=sqlite:///database/dairy_database.db\n' > .env
+
+      - name: Roda as migrações (do zero)
+        run: alembic upgrade head
+
+      - name: Smoke import da aplicação
+        run: PYTHONPATH=app python -c "import main; assert main.app; print('app import OK')"
