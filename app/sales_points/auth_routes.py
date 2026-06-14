@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Response, status
 from starlette.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from sales_points.sale_point_dependencies import make_session, validate_token, oauth2_scheme, require_admin
+from sales_points.sale_point_dependencies import make_session, validate_token, oauth2_scheme, require_admin, require_self_or_admin
 from sales_points.sale_point_controller import get_all_sales_points_controller, login_controller, create_sale_point_controller, get_sale_point, delete_sale_point_controller, logout_controller, delete_all_sales_points_controller, get_outbounds_controller, create_outbound_controller, delete_outbounds_controller, return_outbounds_controller, delete_orders_controller
 from orders.order_controller import get_orders_by_sale_point_id_controller, create_order_controller
 from orders.order_schema import OrderRequestDTO
@@ -32,7 +32,7 @@ async def delete_all(user = Depends(require_admin), session = Depends(make_sessi
 
 
 @auth_router.get("/{id}")  
-async def show(id: int, user = Depends(validate_token), session = Depends(make_session)):
+async def show(id: int, user = Depends(require_self_or_admin), session = Depends(make_session)):
     sale_point = await get_sale_point(id, session)
     return sale_point
 
@@ -50,9 +50,9 @@ async def destroy(
 
 @auth_router.get("/{id}/order") 
 async def get_orders_by_sale_point_id(
-    id: int, 
-    date: Optional[str] = None, 
-    user = Depends(validate_token), 
+    id: int,
+    date: Optional[str] = None,
+    user = Depends(require_self_or_admin),
     session = Depends(make_session)
 ):
     result = await get_orders_by_sale_point_id_controller(session, date, id)
@@ -60,18 +60,18 @@ async def get_orders_by_sale_point_id(
 
 
 @auth_router.post("/{id}/order", status_code=201)
-async def store_order(id:int, request_data: OrderRequestDTO, user = Depends(validate_token), session = Depends(make_session)):
+async def store_order(id:int, request_data: OrderRequestDTO, user = Depends(require_self_or_admin), session = Depends(make_session)):
     result = await create_order_controller(request_data, id, session)
     return result
 
 
 @auth_router.delete("/{id}/order")
-async def delete_orders(id: int, user = Depends(validate_token), session = Depends(make_session)):
+async def delete_orders(id: int, user = Depends(require_self_or_admin), session = Depends(make_session)):
     return await delete_orders_controller(session, id)
 
 
 @auth_router.get("/{id}/outbounds")
-async def get_outbounds(id: int, date: Optional[date] = None,  user = Depends(validate_token), session = Depends(make_session)):
+async def get_outbounds(id: int, date: Optional[date] = None,  user = Depends(require_self_or_admin), session = Depends(make_session)):
     result = await get_outbounds_controller(id, date, session)
     return result
 
@@ -80,7 +80,7 @@ async def get_outbounds(id: int, date: Optional[date] = None,  user = Depends(va
 async def create_outbound(
     id: int,
     request: RetirarProdutosRequestDTO,
-    user = Depends(validate_token),
+    user = Depends(require_self_or_admin),
     session = Depends(make_session)
 ):
     result = await create_outbound_controller(session, id, request)
@@ -88,12 +88,12 @@ async def create_outbound(
 
 
 @auth_router.delete("/{id}/outbounds")
-async def delete_outbounds(id:int, user = Depends(validate_token), session = Depends(make_session)):
+async def delete_outbounds(id:int, user = Depends(require_admin), session = Depends(make_session)):
     return await delete_outbounds_controller(session, id)
 
 
 @auth_router.patch("/{id}/outbounds")
-async def return_outbounds(id: int, user = Depends(validate_token), session = Depends(make_session)):
+async def return_outbounds(id: int, user = Depends(require_self_or_admin), session = Depends(make_session)):
     return await return_outbounds_controller(session, id)
 
 
