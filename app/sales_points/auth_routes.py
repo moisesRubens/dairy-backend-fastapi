@@ -8,6 +8,8 @@ from sales_points.sale_point_controller import get_all_sales_points_controller, 
 from orders.order_controller import get_orders_by_sale_point_id_controller, create_order_controller
 from orders.order_schema import OrderRequestDTO
 from products.product_schema import RetirarProdutosRequestDTO
+from stock_requests.stock_request_service import set_point_stock_service
+from stock_requests.stock_request_schema import StockRequestCreateDTO
 from datetime import date
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -39,7 +41,20 @@ async def delete_all(user = Depends(require_admin), session = Depends(make_sessi
     return {"message": "Sales points excluded"}
 
 
-@auth_router.get("/{id}")  
+@auth_router.get("/me")
+async def me(user = Depends(validate_token), session = Depends(make_session)):
+    # Identidade do usuário logado num único lugar: id + nome + email + papel.
+    # (Declarado ANTES de /{id} para não ser capturado pela rota paramétrica.)
+    sale_point = await get_sale_point(user["sale_point_id"], session)
+    return {
+        "id": user["sale_point_id"],
+        "name": sale_point.name,
+        "email": sale_point.email,
+        "role": user["role"],
+    }
+
+
+@auth_router.get("/{id}")
 async def show(id: int, user = Depends(require_self_or_admin), session = Depends(make_session)):
     sale_point = await get_sale_point(id, session)
     return sale_point
@@ -103,6 +118,12 @@ async def delete_outbounds(id:int, user = Depends(require_admin), session = Depe
 @auth_router.patch("/{id}/outbounds")
 async def return_outbounds(id: int, user = Depends(require_self_or_admin), session = Depends(make_session)):
     return await return_outbounds_controller(session, id)
+
+
+@auth_router.put("/{id}/stock")
+async def set_point_stock(id: int, data: StockRequestCreateDTO, user = Depends(require_admin), session = Depends(make_session)):
+    # Admin ajusta diretamente o estoque de um produto em qualquer ponto.
+    return set_point_stock_service(session, id, data)
 
 
 @auth_router.post("/login", status_code=201)

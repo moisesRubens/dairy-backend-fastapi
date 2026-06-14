@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, date
 from zoneinfo import ZoneInfo
+from sqlalchemy import func
 from fastapi import HTTPException
 from model import StockRequest, Product, RetiradaProduto
 from stock_requests.stock_request_schema import StockRequestCreateDTO, StockRequestResponseDTO
@@ -143,6 +144,55 @@ def reject_stock_request_service(session, admin_id: int, request_id: int, reason
     session.commit()
     session.refresh(req)
     return _to_response(req)
+
+
+def set_point_stock_service(session, point_id: int, data: StockRequestCreateDTO):
+    """Ajuste DIRETO de estoque pelo admin: define o estoque disponível de um
+    produto em um ponto, sem passar por aprovação. Faz upsert da retirada do
+    dia (cria se não existir, sobrescreve a quantidade se existir)."""
+    if data.unidade not in VALID_UNITS:
+        raise HTTPException(400, "unidade inválida (use amount, kg ou liters)")
+    if data.quantity < 0:
+        raise HTTPException(400, "quantidade não pode ser negativa")
+    product = session.get(Product, data.product_id)
+    if not product:
+        raise HTTPException(404, "produto não encontrado")
+
+    retirada = session.query(RetiradaProduto).filter(
+        RetiradaProduto.sale_point_id == point_id,
+        RetiradaProduto.product_id == data.product_id,
+        func.date(RetiradaProduto.data) == date.today(),
+    ).first()
+
+    if retirada:
+        # mantém o que já foi vendido; redefine o disponível
+        retirada.remaining_quantity = data.quantity
+        retirada.taken_quantity = (retirada.sold_quantity or 0) + data.quantity
+        retirada.unidade = data.unidade
+    else:
+        retirada = RetiradaProduto(
+            sale_point_id=point_id,
+            product_id=data.product_id,
+            taken_quantity=data.quantity,
+            unidade=data.unidade,
+            observacao="Ajuste de estoque pelo administrador",
+            data=_now(),
+            sold_quantity=0,
+            total_value=0,
+            status=True,
+            remaining_quantity=data.quantity,
+        )
+        session.add(retirada)
+
+    session.commit()
+    session.refresh(retirada)
+    return {
+        "sale_point_id": point_id,
+        "product_id": data.product_id,
+        "product_name": product.name,
+        "unidade": retirada.unidade,
+        "remaining_quantity": retirada.remaining_quantity,
+    }
 
 
 def cancel_stock_request_service(session, user, request_id: int):
