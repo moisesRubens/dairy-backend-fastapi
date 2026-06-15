@@ -30,7 +30,9 @@ class Order(Base):
     status = Column("status", Boolean, server_default=text('TRUE'), nullable=False)
     total_value = Column("total_value", Float, nullable=False)
     description = Column("description", String(200), nullable=True)
-    order_date = Column("order_date",  DateTime(timezone=True), default=lambda:datetime.now(tz=ZoneInfo("America/Sao_Paulo")), nullable=False)  
+    # Cliente opcional vinculado à venda (CRM). SET NULL se o cliente sumir.
+    client_id = Column(Integer, ForeignKey("clients.id", ondelete="SET NULL"), nullable=True)
+    order_date = Column("order_date",  DateTime(timezone=True), default=lambda:datetime.now(tz=ZoneInfo("America/Sao_Paulo")), nullable=False)
     item_order = relationship(
         "ItemsOrder",
         back_populates="order",
@@ -162,3 +164,20 @@ class StockRequest(Base):
     applied_outbound_id = Column(Integer, ForeignKey("retiradas_produto.id", ondelete="SET NULL"), nullable=True)
 
     product = relationship("Product")
+
+
+class Client(Base):
+    """Cliente cadastrado por um ponto de venda (base do CRM).
+
+    Pertence ao ponto que o cadastrou (sale_point_id). O vendedor vê só os
+    clientes do próprio ponto; o admin vê os de todos os pontos.
+    """
+    __tablename__ = "clients"
+
+    id = Column("id", Integer, primary_key=True, autoincrement=True)
+    name = Column("name", String(120), nullable=False)
+    phone = Column("phone", String(30), nullable=True)
+    email = Column("email", String(200), nullable=True)
+    notes = Column("notes", String(255), nullable=True)
+    sale_point_id = Column(Integer, ForeignKey("sales_points.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(tz=ZoneInfo("America/Sao_Paulo")))
