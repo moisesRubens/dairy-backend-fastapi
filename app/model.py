@@ -32,6 +32,8 @@ class Order(Base):
     description = Column("description", String(200), nullable=True)
     # Cliente opcional vinculado à venda (CRM). SET NULL se o cliente sumir.
     client_id = Column(Integer, ForeignKey("clients.id", ondelete="SET NULL"), nullable=True)
+    # Forma de pagamento: dinheiro | pix | cartao (opcional).
+    payment_method = Column(String(20), nullable=True)
     order_date = Column("order_date",  DateTime(timezone=True), default=lambda:datetime.now(tz=ZoneInfo("America/Sao_Paulo")), nullable=False)
     item_order = relationship(
         "ItemsOrder",
