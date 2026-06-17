@@ -18,7 +18,7 @@ async def index(user = Depends(validate_token), session = Depends(make_session))
 @product_router.post("/", status_code=201)
 async def store(name: str, price: float, amount: int = None, kg: float = None, liters: float = None, user = Depends(require_admin), session = Depends(make_session)):
     product_data = await create_product_controller(name, price, amount, kg, liters,session)
-    return product_data, 
+    return product_data
 
 
 @product_router.delete("/{id}")
