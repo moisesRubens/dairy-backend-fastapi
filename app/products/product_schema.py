@@ -7,9 +7,9 @@ class ProductResponseDTO(BaseModel):
     id: int
     name: str
     price: float
-    amount: float | None = None
-    kg: float | None = None
-    liters: float | None = None
+    amount: float | None = -1
+    kg: float | None = -1
+    liters: float | None = -1
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -20,9 +20,9 @@ class ProductResponseDTO(BaseModel):
 class ProductRequestDTO(BaseModel):
     name: str | None
     price: float | None
-    amount: float | None = None
-    kg: float | None = None
-    liters: float | None = None
+    amount: float | None = -1
+    kg: float | None = -1
+    liters: float | None = -1
 
     model_config = ConfigDict(
         populate_by_name=True
