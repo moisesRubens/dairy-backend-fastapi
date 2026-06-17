@@ -1,4 +1,4 @@
-from products.product_service import delete_product_service, create_product_service, get_all_products_service, delete_all_products_service, get_products_by_sale_point_service, retirar_produtos_service, get_products_service, get_all_retiradas_service,return_products_to_storage_service, get_product_service, edit_product_service
+from products.product_service import delete_product_service, create_product_service, get_all_products_service, delete_all_products_service, get_products_by_sale_point_service, retirar_produtos_service, get_products_service, get_all_retiradas_service,return_products_to_storage_service, get_product_service, edit_product_service, set_product_image_service
 from fastapi import HTTPException
 from products.ProductExceptions import ExistingProductException, ProductNotFound
 from products.product_schema import ProductRequestDTO
@@ -52,6 +52,15 @@ async def edit_product_controller(session: Session, id: int, product_request: Pr
         return edit_product_service(session, id, product_request)
     except Exception as e:
         raise HTTPException(400, detail=str(e))
+
+
+async def set_product_image_controller(session: Session, id: int, file_bytes: bytes, ext: str):
+    try:
+        return set_product_image_service(session, id, file_bytes, ext)
+    except ProductNotFound:
+        raise HTTPException(404, "Product not found")
+    except Exception as e:
+        raise HTTPException(500, detail=str(e))
 
 
 async def retirar_produtos_controller(session: Session, sale_point_id: int, produtos: list, observacao: str = None):

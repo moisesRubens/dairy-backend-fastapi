@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload, Session
 from fastapi import HTTPException
 from typing import List
 from datetime import date
+import os
 
 def get_all_products_service(session):
     result = []
@@ -230,6 +231,31 @@ def get_unit_type_and_quantity_from_product(session, product):
         result["quantity"] = product.liters
     
     return result
+
+def set_product_image_service(session: Session, id: int, file_bytes: bytes, ext: str):
+    """Salva a imagem em static/products/{id}{ext}, atualiza product.image_url
+    e retorna o DTO atualizado. O caminho de disco é relativo à raiz do repo
+    (onde o uvicorn roda); a URL pública é "/static/products/{id}{ext}".
+    """
+    try:
+        product = session.get(Product, id)
+        if not product:
+            raise ProductNotFound()
+
+        os.makedirs(os.path.join("static", "products"), exist_ok=True)
+        disk_path = os.path.join("static", "products", f"{id}{ext}")
+        with open(disk_path, "wb") as f:
+            f.write(file_bytes)
+
+        product.image_url = f"/static/products/{id}{ext}"
+        session.commit()
+        return ProductResponseDTO.model_validate(product)
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
 
 def get_product_service(session: Session, id: int):
     try:

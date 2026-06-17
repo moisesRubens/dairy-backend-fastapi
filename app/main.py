@@ -1,4 +1,6 @@
+import os
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from sales_points.auth_routes import auth_router
 from outbounds.outbound_routes import outbound_router
 from orders.order_routes import order_router
@@ -16,6 +18,11 @@ app.include_router(outbound_router)
 app.include_router(stock_request_router)
 app.include_router(metrics_router)
 app.include_router(client_router)
+
+# Serve os arquivos estáticos (fotos de produto). O diretório é resolvido a
+# partir da raiz do repo, onde o uvicorn é iniciado. Garante que exista.
+os.makedirs("static", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 origins = [
     "http://localhost:5173", 

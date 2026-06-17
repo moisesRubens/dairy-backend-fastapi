@@ -34,3 +34,7 @@ build/
 dist/
 .coverage
 htmlcov/
+
+# Uploaded product images (mantém a estrutura via .gitkeep)
+static/products/*
+!static/products/.gitkeep
