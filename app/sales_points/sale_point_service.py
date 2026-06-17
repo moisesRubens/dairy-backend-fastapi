@@ -121,7 +121,11 @@ async def create_outbound_service(session: Session, id: int, outbound_request: R
             outbound = None
             if exists_outbound:
                 exists_outbound.taken_quantity += product_outbound.quantidade
-                exists_outbound.remaining_quantity += product_outbound.quantidade
+                if exists_outbound.status:
+                    exists_outbound.remaining_quantity += product_outbound.quantidade
+                else:
+                    exists_outbound.status = True
+                    exists_outbound.remaining_quantity = product_outbound.quantidade
                 outbound = exists_outbound
             else:
                 new_outbound = RetiradaProduto(
