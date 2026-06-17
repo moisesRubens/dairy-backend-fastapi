@@ -5,6 +5,7 @@ from orders.order_routes import order_router
 from products.product_routes import product_router
 from stock_requests.stock_request_routes import stock_request_router
 from metrics.metrics_routes import metrics_router
+from clients.client_routes import client_router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -14,6 +15,7 @@ app.include_router(product_router)
 app.include_router(outbound_router)
 app.include_router(stock_request_router)
 app.include_router(metrics_router)
+app.include_router(client_router)
 
 origins = [
     "http://localhost:5173", 

@@ -16,3 +16,9 @@ async def summary(user = Depends(require_admin), session = Depends(make_session)
 async def revenue_by_point(user = Depends(require_admin), session = Depends(make_session)):
     # Ranking de faturamento por ponto de venda.
     return svc.get_revenue_by_point_service(session)
+
+
+@metrics_router.get("/payments")
+async def payments(user = Depends(require_admin), session = Depends(make_session)):
+    # Faturamento por forma de pagamento.
+    return svc.get_payments_breakdown_service(session)

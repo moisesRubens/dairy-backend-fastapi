@@ -14,6 +14,8 @@ def create_order_service(order_data: OrderRequestDTO, sale_point_id: int, sessio
         total_value = 0.0
         order.total_value = 0
         order.description = order_data.description
+        order.client_id = order_data.client_id  # vínculo opcional com cliente
+        order.payment_method = order_data.payment_method  # forma de pagamento
         session.add(order)
         session.flush()
 

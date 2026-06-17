@@ -40,6 +40,8 @@ class OrderRequestDTO(BaseModel):
     status: Optional[bool] = None
     total_value: Optional[float] = None
     order_date: Optional[date] = None
+    client_id: Optional[int] = None  # cliente opcional vinculado à venda (CRM)
+    payment_method: Optional[str] = None  # dinheiro | pix | cartao
     items: List[ItemOrderRequestDTO]
 
 

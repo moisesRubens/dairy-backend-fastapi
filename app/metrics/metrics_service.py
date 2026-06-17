@@ -23,6 +23,25 @@ def get_summary_service(session):
     }
 
 
+def get_payments_breakdown_service(session):
+    """Faturamento por forma de pagamento (dinheiro | pix | cartao)."""
+    rows = session.query(
+        func.coalesce(Order.payment_method, 'não informado'),
+        func.coalesce(func.sum(Order.total_value), 0.0),
+        func.count(Order.id),
+    ).group_by(Order.payment_method) \
+     .order_by(func.coalesce(func.sum(Order.total_value), 0.0).desc()).all()
+
+    return [
+        {
+            "method": method,
+            "revenue": round(float(revenue or 0), 2),
+            "orders_count": int(count or 0),
+        }
+        for method, revenue, count in rows
+    ]
+
+
 def get_revenue_by_point_service(session):
     """Ranking de faturamento por ponto de venda (maior para menor)."""
     rows = session.query(
