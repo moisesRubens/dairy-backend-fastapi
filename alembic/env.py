@@ -14,6 +14,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 # access to the values within the .ini file in use.
 config = context.config
 
+# Usa o mesmo banco do app: lê DATABASE_URL do .env/ambiente (sobrescreve o
+# valor hardcoded do alembic.ini), mantendo o default antigo como fallback.
+from decouple import config as env_config
+config.set_main_option(
+    "sqlalchemy.url",
+    env_config("DATABASE_URL", default="sqlite:///database/dairy_database.db"),
+)
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
