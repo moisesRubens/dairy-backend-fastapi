@@ -8,6 +8,7 @@ from datetime import date
 from sqlalchemy.orm import Session
 from products.product_service import get_products_by_sale_point_service
 from products.product_schema import RetirarProdutosRequestDTO
+from products.ProductExceptions import ProductNotFound, InsuficientProductsAmountException
 
 
 async def create_sale_point_controller(name, email, password, session):
@@ -85,6 +86,14 @@ async def create_outbound_controller(session: Session, id: int, outbound_request
         return await create_outbound_service(session, id, outbound_request)
     except SalePointNotFound as e:
         raise HTTPException(404, detail=str(e))
+    except ProductNotFound as e:
+        raise HTTPException(404, detail=str(e))
+    except InsuficientProductsAmountException as e:
+        # Estoque insuficiente no depósito é conflito de estado, não erro 500.
+        raise HTTPException(409, detail=str(e.message))
+    except HTTPException:
+        # Erros HTTP do serviço (ex.: unidade inválida) devem propagar como estão.
+        raise
     except Exception as e:
         raise HTTPException(500, "Internal server error")
     
