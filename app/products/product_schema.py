@@ -31,7 +31,7 @@ class ProductRequestDTO(BaseModel):
 
 class ItemRetiradaDTO(BaseModel):
     product_id: int
-    quantidade: float
+    quantidade: float 
     unidade: str 
     
 class ItemToReturnToStorageDTO(BaseModel):

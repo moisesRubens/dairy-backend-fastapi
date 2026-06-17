@@ -208,13 +208,13 @@ def get_unit_type_and_quantity_from_product(session, product):
     result = {"unit_type": None,
               "quantity": None}
     
-    if product.amount:
+    if product.amount != -1:
         result["unit_type"] = "amount"
         result["quantity"] = product.amount
-    elif product.kg:
+    elif product.kg != -1:
         result["unit_type"] = "kg"
         result["quantity"] = product.kg
-    elif product.liters:
+    elif product.liters != -1:
         result["unit_type"] = "liters"
         result["quantity"] = product.liters
     
