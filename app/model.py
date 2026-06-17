@@ -67,6 +67,10 @@ class Product(Base):
     amount = Column("amount", Integer, nullable=True)
     kg = Column("kg", Float, nullable=True)
     liters = Column("liters", Float, nullable=True)
+    # URL pública da foto do produto (ex.: "/static/products/5.png"). Nullable
+    # porque produtos antigos não têm imagem; a URL completa é montada no front
+    # como {API_BASE_URL}{image_url}.
+    image_url = Column("image_url", String(255), nullable=True)
     item_order = relationship(
         "ItemsOrder",
         back_populates="product",

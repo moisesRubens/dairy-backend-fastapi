@@ -10,13 +10,14 @@ class ProductResponseDTO(BaseModel):
     amount: float | None = None
     kg: float | None = None
     liters: float | None = None
+    image_url: str | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
         populate_by_name=True
     )
-    
-    
+
+
 class ProductRequestDTO(BaseModel):
     name: str | None
     price: float | None
