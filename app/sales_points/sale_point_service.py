@@ -121,7 +121,11 @@ async def create_outbound_service(session: Session, id: int, outbound_request: R
             outbound = None
             if exists_outbound:
                 exists_outbound.taken_quantity += product_outbound.quantidade
-                exists_outbound.remaining_quantity += product_outbound.quantidade
+                if exists_outbound.status:
+                    exists_outbound.remaining_quantity += product_outbound.quantidade
+                else:
+                    exists_outbound.status = True
+                    exists_outbound.remaining_quantity = product_outbound.quantidade
                 outbound = exists_outbound
             else:
                 new_outbound = RetiradaProduto(
@@ -177,14 +181,17 @@ async def delete_outbounds_service(session: Session, id: int):
             return result
 
         for outbound in outbounds:
-            product = session.get(Product, outbound.product.id)
-            if outbound.status:
-                if product.amount is not None:
-                    product.amount += outbound.remaining_quantity 
-                elif product.kg is not None:
-                    product.kg += outbound.remaining_quantity
-                elif product.liters is not None:
-                    product.liters += outbound.remaining_quantity
+            product = session.get(Product, outbound.product_id)
+            
+            if product:
+                if outbound.status:
+                    if product.amount is not None:
+                        product.amount += outbound.remaining_quantity 
+                    elif product.kg is not None:
+                        product.kg += outbound.remaining_quantity
+                    elif product.liters is not None:
+                        product.liters += outbound.remaining_quantity
+            
             result.append(ItemsRetiradaResponseDTO.from_orm(outbound))
             session.delete(outbound)
         
