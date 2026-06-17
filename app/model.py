@@ -38,6 +38,9 @@ class Order(Base):
     client_id = Column(Integer, ForeignKey("clients.id", ondelete="SET NULL"), nullable=True)
     # Forma de pagamento: dinheiro | pix | cartao (opcional).
     payment_method = Column(String(20), nullable=True)
+    # UUID gerado pelo CLIENTE por venda (idempotência do outbox offline):
+    # reenviar o mesmo uuid não cria pedido duplicado.
+    client_uuid = Column(String(64), nullable=True)
     order_date = Column("order_date",  DateTime(timezone=True), default=lambda:datetime.now(tz=ZoneInfo("America/Sao_Paulo")), nullable=False)
     item_order = relationship(
         "ItemsOrder",

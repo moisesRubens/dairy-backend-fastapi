@@ -8,14 +8,23 @@ from datetime import datetime, date
 from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
-def create_order_service(order_data: OrderRequestDTO, sale_point_id: int, session):    
+def create_order_service(order_data: OrderRequestDTO, sale_point_id: int, session):
     try:
+        # Idempotência (outbox offline): se o mesmo client_uuid já foi gravado,
+        # retorna o pedido existente em vez de duplicar a venda.
+        if order_data.client_uuid:
+            existing = session.query(Order).filter(
+                Order.client_uuid == order_data.client_uuid).first()
+            if existing:
+                return OrderResponseDTO.model_validate(existing)
+
         order = Order()
         total_value = 0.0
         order.total_value = 0
         order.description = order_data.description
         order.client_id = order_data.client_id  # vínculo opcional com cliente
         order.payment_method = order_data.payment_method  # forma de pagamento
+        order.client_uuid = order_data.client_uuid  # chave de idempotência
         session.add(order)
         session.flush()
 

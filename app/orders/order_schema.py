@@ -42,6 +42,7 @@ class OrderRequestDTO(BaseModel):
     order_date: Optional[date] = None
     client_id: Optional[int] = None  # cliente opcional vinculado à venda (CRM)
     payment_method: Optional[str] = None  # dinheiro | pix | cartao
+    client_uuid: Optional[str] = None  # idempotência da venda offline (outbox)
     items: List[ItemOrderRequestDTO]
 
 
