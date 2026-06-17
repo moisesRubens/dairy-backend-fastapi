@@ -2,8 +2,12 @@ from sqlalchemy import create_engine, Column, Boolean, Integer, Float, String, D
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from decouple import config
 
-db = create_engine("sqlite:///database/dairy_database.db")
+# Lê do .env/ambiente (igual ao resto do código). Default mantém o comportamento
+# anterior, então quem já roda da raiz do repo não precisa mudar nada; mas agora
+# dá para apontar outro banco com `DATABASE_URL=...` sem editar código.
+db = create_engine(config("DATABASE_URL", default="sqlite:///database/dairy_database.db"))
 Base = declarative_base()
 
 class SalePoints(Base):
