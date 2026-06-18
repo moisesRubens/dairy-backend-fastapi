@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from outbounds.outbound_service import update_quantity_service, edit_outbound_service, get_all_products_by_sale_point_service
 from outbounds.outbound_schema import OutboundRequestDTO
 from fastapi import HTTPException
+from datetime import date 
 
 async def update_quantity_controller(session: Session, id: int, new_quantity: int):
     try:
