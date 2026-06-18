@@ -134,7 +134,12 @@ async def create_outbound_service(session: Session, id: int, outbound_request: R
             if not product:
                 raise ProductNotFound()
             
+            print(product.amount, product.kg, product.liters)
+
             product_data = get_unit_type_and_quantity_from_product(session, product)
+
+            print(product_data)
+
             if product_outbound.unidade != product_data.get("unit_type"):
                 raise HTTPException(404, "Dados inválidos")
             if product_outbound.quantidade > product_data.get("quantity"):
