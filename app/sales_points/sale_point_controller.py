@@ -1,4 +1,4 @@
-from sales_points.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service, delete_all_sales_points_service, create_outbound_service, return_outbounds_service, delete_orders_service, delete_outbounds_service
+from sales_points.sale_point_service import get_sale_point_service, get_all_sales_points_service, login_service, create_sale_point_service, logout_service, delete_sale_point_service, delete_all_sales_points_service, create_outbound_service, return_outbounds_service, delete_orders_service, delete_outbounds_service, edit_sale_point_service
 from fastapi.security import OAuth2PasswordRequestForm
 from sales_points.sale_point_exceptions import ExistingSalePointException, SalePointNotFound
 from fastapi import HTTPException
@@ -17,6 +17,16 @@ async def create_sale_point_controller(name, email, password, session):
         return sale_point_data
     except ExistingSalePointException as e:
         raise HTTPException(409, detail=str(e))
+    
+
+async def edit_sale_point_controller(id, name, email, password, level, session):
+    try:
+        sale_point_request = SalePointRequestDTO(name=name, email=email, password=password, level=level)
+        sale_point_data = await edit_sale_point_service(id, sale_point_request, session)
+        return sale_point_data
+    except ExistingSalePointException as e:
+        raise HTTPException(409, detail=str(e))
+
 
 async def login_controller(form_data: OAuth2PasswordRequestForm, session):
     try:

@@ -31,11 +31,35 @@ async def create_sale_point_service(sale_point_request: SalePointRequestDTO, ses
     sale_point.password = hashed_pw
     sale_point.name = sale_point_request.name
     sale_point.email = sale_point_request.email
+    sale_point.level = sale_point_request.level
     session.add(sale_point)
     session.flush()
     sale_point_response = SalePointResponseDTO.model_validate(sale_point)
     session.commit()
     return sale_point_response
+
+
+async def edit_sale_point_service(id: int, sale_point_request: SalePointRequestDTO, session):
+    sale_point = session.get(SalePoints, id)
+    
+    if not sale_point:
+        raise SalePointNotFound()
+    
+    if sale_point_request.name is not None:
+        sale_point.name = sale_point_request.name
+    if sale_point_request.email is not None:
+        sale_point.email = sale_point_request.email
+    if sale_point_request.level is not None:
+        sale_point.level = sale_point_request.level
+    if sale_point_request.password is not None and sale_point_request.password.strip():
+        sale_point.password = pwd_context.hash(sale_point_request.password)
+
+    session.add(sale_point)
+    session.flush()
+    sale_point_response = SalePointResponseDTO.model_validate(sale_point)
+    session.commit()
+    return sale_point_response
+
 
 def login_service(form_data: OAuth2PasswordRequestForm, session):
     SECRET_KEY = config('SECRET_KEY')

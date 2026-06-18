@@ -18,7 +18,7 @@ async def edit_outbound(id: int, outbound_request: OutboundRequestDTO, user = De
 async def update_quantity(id: int, quantity: int, user = Depends(validate_token), session = Depends(make_session)):
     return await update_quantity_controller(session, id, quantity)
 
-@outbound_router.get("/outbounds/")
+@outbound_router.get("/")
 async def index(date: Optional[date] = None, user = Depends(validate_token), session = Depends(make_session)):
     result = await get_all_outbounds_controller(date, session)
     return result

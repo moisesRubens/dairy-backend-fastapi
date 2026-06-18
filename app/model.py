@@ -13,6 +13,8 @@ class SalePoints(Base):
     name = Column("name", String(100))
     email = Column("email", String(200), nullable=True, unique=False)
     password = Column("password", String(200))
+    level = Column("level", Integer, nullable=True, default=0)
+
     order_sale_point = relationship(
         "OrderSalePoint",
         cascade="all, delete-orphan",
