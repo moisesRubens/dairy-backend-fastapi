@@ -1,4 +1,4 @@
-from model import Product, RetiradaProduto
+from model import Product, RetiradaProduto, SalePoints
 from products.product_schema import ProductResponseDTO, ItemRetiradaDTO, RetiradaResponseDTO, ItemsRetiradaResponseDTO, ProductRequestDTO
 from products.ProductExceptions import ExistingProductException, ProductNotFound, InsuficientProductsAmountException
 from sqlalchemy import func, desc
@@ -116,12 +116,17 @@ async def get_products_by_sale_point_service(sale_point_id, session, date_param,
         query = query.filter(func.date(RetiradaProduto.data) == date_param)  
     retiradas = query.options(selectinload(RetiradaProduto.product)).order_by(desc(RetiradaProduto.data)).all()
     
+    sale_point = session.get(SalePoints, sale_point_id)
+
     if status: 
         return retiradas 
     else:  
         for retirada in retiradas:
             result.append(ItemsRetiradaResponseDTO.from_orm(retirada))
-        return result
+        return {
+            'sale_point_name': sale_point.name,
+            'outbounds': result
+        }
 
 async def return_products_to_storage_service(session, user, sale_point_id):
     try:

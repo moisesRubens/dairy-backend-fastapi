@@ -1,9 +1,12 @@
 from sqlalchemy.orm import Session
-from model import RetiradaProduto, Product
+from model import RetiradaProduto, Product, SalePoints
+from products.product_schema import ItemsRetiradaResponseDTO
 from outbounds.outbound_schema import OutboundResponseDTO, OutboundRequestDTO
 from products.ProductExceptions import ProductNotFound, InsuficientProductsAmountException
 from fastapi import HTTPException
 from outbounds.outbound_exceptions import OutboundNotFound
+from sqlalchemy import func, desc
+from sqlalchemy.orm import selectinload
 
 
 async def update_quantity_service(session: Session, id: int, quantity: int,):
@@ -75,3 +78,29 @@ def edit_outbound_service(session: Session, id: int, outbound_request: OutboundR
         raise 
     finally:
         session.close()
+
+
+async def get_all_products_by_sale_point_service(session, date_param, status=False):
+    result = []
+    sale_points = session.query(SalePoints).all()
+    
+    for sale_point in sale_points:
+        query = session.query(RetiradaProduto).filter(RetiradaProduto.sale_point_id == sale_point.id)
+        
+        if date_param is not None:
+            query = query.filter(func.date(RetiradaProduto.data) == date_param)
+        
+        retiradas = query.options(selectinload(RetiradaProduto.product)).order_by(desc(RetiradaProduto.data)).all()
+        
+        outbound_items = []
+        for retirada in retiradas:
+            outbound_items.append(ItemsRetiradaResponseDTO.from_orm(retirada))
+        
+        result.append({
+            'sale_point_name': sale_point.name,
+            'outbounds': outbound_items
+        })
+    
+    return result
+    
+    
