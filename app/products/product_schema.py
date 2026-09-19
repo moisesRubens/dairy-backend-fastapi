@@ -49,6 +49,7 @@ class ItemsRetiradaResponseDTO(BaseModel):
     sale_point_id: int
     product_id: int
     name: str | None = None  # Preenchido manualmente
+    price: float
     status: bool
     date: datetime = Field(alias="data")
     unit_type: str = Field(alias="unidade")
@@ -71,6 +72,7 @@ class ItemsRetiradaResponseDTO(BaseModel):
             sale_point_id=retirada.sale_point_id,
             product_id=retirada.product_id,
             name=retirada.product.name if retirada.product else None,
+            price=retirada.product.price,
             status=retirada.status,
             date=retirada.data,
             unit_type=retirada.unidade,
