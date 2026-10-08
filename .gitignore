@@ -3,6 +3,7 @@ env/
 env\
 \env
 .env
+logs/
 database/dairy_database.db
 app/__pycache__/*
 app/orders/__pycache__/*
